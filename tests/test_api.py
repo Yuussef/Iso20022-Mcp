@@ -95,3 +95,41 @@ def test_ask_is_disabled_without_bedrock_model(monkeypatch: pytest.MonkeyPatch) 
 
     assert response.status_code == 503
     assert "BEDROCK_MODEL_ID" in response.json()["detail"]
+
+
+def _address_sample(name: str) -> str:
+    return (Path(__file__).resolve().parents[1] / "examples" / "postal-address" / f"{name}.xml").read_text(encoding="utf-8")
+
+
+def test_postal_address_check_endpoint() -> None:
+    response = client.post("/api/v1/checks/postal-address", json={"xml": _address_sample("problems")})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["kind"] == "postal_address_check"
+    assert body["compliant"] is False
+    assert body["summary"]["unstructured"] == 2
+
+
+def test_postal_address_check_enforce_flag() -> None:
+    xml = _address_sample("problems")
+
+    relaxed = client.post("/api/v1/checks/postal-address", json={"xml": xml}).json()
+    enforced = client.post("/api/v1/checks/postal-address", json={"xml": xml, "enforce_unstructured_removal": True}).json()
+
+    assert enforced["summary"]["errors"] == relaxed["summary"]["errors"] + 2
+    assert enforced["unstructured_removal"]["enforced"] is True
+
+
+def test_postal_address_check_handles_entities_without_500() -> None:
+    xml = '<!DOCTYPE D [<!ENTITY a "A">]><Document><Dbtr><PstlAdr><TwnNm>&a;</TwnNm></PstlAdr></Dbtr></Document>'
+
+    response = client.post("/api/v1/checks/postal-address", json={"xml": xml})
+
+    assert response.status_code == 200
+    assert response.json()["kind"] == "unsupported_xml"
+
+
+@pytest.mark.parametrize("payload", [{"xml": ""}, {}, {"xml": "x" * 1_000_001}, {"xml": "<a/>", "enforce_unstructured_removal": "maybe"}])
+def test_postal_address_check_rejects_invalid_requests(payload: dict) -> None:
+    assert client.post("/api/v1/checks/postal-address", json=payload).status_code == 422

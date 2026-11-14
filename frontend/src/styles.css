@@ -251,3 +251,21 @@ select:disabled { opacity: 0.65; }
   .search-input-row .button-primary { flex: 1 1 100%; }
   .source-footer { align-items: flex-start; }
 }
+
+/* Postal address check */
+.check-option { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #afbdd0; font-size: 10px; cursor: pointer; }
+.check-option input { accent-color: #a58df4; }
+.address-block { margin-top: 14px; padding-top: 12px; border-top: 1px solid #8091ab17; }
+.address-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.address-heading strong { color: #dfe6f1; font-size: 11px; }
+.format-badge { border: 1px solid; border-radius: 4px; padding: 3px 6px; font: 8px "DM Mono", monospace; letter-spacing: 0.4px; }
+.format-structured { color: #67d3ae; border-color: #67d3ae44; }
+.format-hybrid { color: #a99af0; border-color: #a99af044; }
+.format-unstructured { color: #e7b881; border-color: #e7b88144; }
+.address-ok { margin: 6px 0 0; color: #75839a; font-size: 9px; }
+.severity-error { border-color: #ef9b8040; }
+.severity-error strong { color: #ef9b80; }
+.severity-warning strong { color: #e7b881; }
+.severity-info strong { color: #8fb4e8; }
+.finding-fix { color: #9fd9c4 !important; }
+.notice-card a { color: #baaafa; }

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic pacs.008 fragment for the CBPR+ postal address check. Not a complete or real payment. -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <CdtTrfTxInf>
+      <Dbtr>
+        <Nm>Atelier Demo SARL</Nm>
+        <PstlAdr>
+          <TwnNm>Lyon</TwnNm>
+          <Ctry>FR</Ctry>
+          <AdrLine>Batiment B, 3e etage</AdrLine>
+          <AdrLine>14 Quai de la Demo</AdrLine>
+        </PstlAdr>
+      </Dbtr>
+      <DbtrAgt><FinInstnId><BICFI>DEMOFRPPXXX</BICFI></FinInstnId></DbtrAgt>
+      <CdtrAgt><FinInstnId><BICFI>DEMOGB2LXXX</BICFI></FinInstnId></CdtrAgt>
+      <Cdtr>
+        <Nm>Example Trading Ltd</Nm>
+        <PstlAdr>
+          <TwnNm>London</TwnNm>
+          <Ctry>GB</Ctry>
+          <AdrLine>Unit 4, 20 Sample Street, London</AdrLine>
+        </PstlAdr>
+      </Cdtr>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

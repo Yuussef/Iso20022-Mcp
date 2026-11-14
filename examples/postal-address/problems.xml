@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic pacs.008 fragment for the CBPR+ postal address check. Not a complete or real payment. -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <CdtTrfTxInf>
+      <Dbtr>
+        <Nm>Atelier Demo SARL</Nm>
+        <PstlAdr>
+          <AdrLine>12 Rue de la Demo</AdrLine>
+          <AdrLine>75001 Paris</AdrLine>
+          <AdrLine>France</AdrLine>
+        </PstlAdr>
+      </Dbtr>
+      <DbtrAgt><FinInstnId><BICFI>DEMOFRPPXXX</BICFI></FinInstnId></DbtrAgt>
+      <CdtrAgt>
+        <FinInstnId>
+          <BICFI>DEMODEFFXXX</BICFI>
+          <PstlAdr>
+            <AdrLine>Bankstrasse 1</AdrLine>
+            <AdrLine>60311 Frankfurt</AdrLine>
+          </PstlAdr>
+        </FinInstnId>
+      </CdtrAgt>
+      <Cdtr>
+        <Nm>Beispiel GmbH</Nm>
+        <PstlAdr>
+          <StrtNm>Musterstrasse</StrtNm>
+          <TwnNm>60311 Frankfurt</TwnNm>
+          <Ctry>Germany</Ctry>
+        </PstlAdr>
+      </Cdtr>
+      <UltmtCdtr>
+        <Nm>Beispiel Holding</Nm>
+        <PstlAdr>
+          <TwnNm>Berlin</TwnNm>
+          <AdrLine>Haus A</AdrLine>
+          <AdrLine>Etage 2</AdrLine>
+          <AdrLine>Alexanderplatz 1</AdrLine>
+        </PstlAdr>
+      </UltmtCdtr>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

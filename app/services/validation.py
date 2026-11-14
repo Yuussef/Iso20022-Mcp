@@ -3,26 +3,28 @@ from __future__ import annotations
 from typing import Any
 
 from app.services.registry import SchemaUnavailableError, schema_path
+from app.services.xml_safety import (
+    MAX_XML_CHARS,
+    UntrustedXmlError,
+    ValidatorUnavailableError,
+    parse_untrusted_xml,
+    safe_parser,
+)
 
-MAX_XML_CHARS = 1_000_000
-
-
-class ValidatorUnavailableError(Exception):
-    """Raised when the optional XML validation dependency is not installed."""
+__all__ = [
+    "MAX_XML_CHARS",
+    "SchemaConfigurationError",
+    "ValidatorUnavailableError",
+    "validate_message",
+]
 
 
 class SchemaConfigurationError(Exception):
     """Raised when a registered local XSD cannot be parsed or compiled."""
 
 
-def _unsupported_xml(message_id: str, code: str, message: str) -> dict[str, Any]:
-    return {
-        "message_id": message_id,
-        "valid": False,
-        "kind": "unsupported_xml",
-        "errors": [{"code": code, "message": message, "line": None, "column": None, "xpath": None}],
-        "errors_truncated": False,
-    }
+def _rejected(message_id: str, kind: str, error: dict[str, Any]) -> dict[str, Any]:
+    return {"message_id": message_id, "valid": False, "kind": kind, "errors": [error], "errors_truncated": False}
 
 
 def validate_message(message_id: str, xml: str) -> dict[str, Any]:
@@ -33,52 +35,22 @@ def validate_message(message_id: str, xml: str) -> dict[str, Any]:
         raise SchemaUnavailableError(message_id)
 
     try:
-        from lxml import etree
-    except ImportError as exc:
-        raise ValidatorUnavailableError from exc
+        xml_root = parse_untrusted_xml(xml)
+    except UntrustedXmlError as exc:
+        return _rejected(message_id, exc.kind, exc.as_error())
 
-    parser = etree.XMLParser(
-        resolve_entities=False,
-        no_network=True,
-        load_dtd=False,
-        huge_tree=False,
-        recover=False,
-    )
-    try:
-        xml_root = etree.fromstring(xml.encode("utf-8"), parser=parser)
-    except etree.XMLSyntaxError as exc:
-        return {
-            "message_id": message_id,
-            "valid": False,
-            "kind": "malformed_xml",
-            "errors": [
-                {
-                    "code": "XML_SYNTAX_ERROR",
-                    "message": str(exc).split(", line")[0][:500],
-                    "line": exc.lineno,
-                    "column": None,
-                    "xpath": None,
-                }
-            ],
-            "errors_truncated": False,
-        }
-
-    # ISO 20022 messages never carry a DTD. Entities are already left unexpanded by the
-    # parser, but unresolved entity references make lxml's XSD validator raise, so reject
-    # any DOCTYPE up front with a structured result instead.
-    if xml_root.getroottree().docinfo.doctype:
-        return _unsupported_xml(message_id, "DTD_NOT_ALLOWED", "XML documents with a DOCTYPE declaration are not accepted.")
+    from lxml import etree
 
     try:
-        schema_doc = etree.parse(str(selected_schema), parser=parser)
-        schema = etree.XMLSchema(schema_doc)
+        schema = etree.XMLSchema(etree.parse(str(selected_schema), parser=safe_parser()))
     except (etree.XMLSyntaxError, etree.XMLSchemaParseError) as exc:
         raise SchemaConfigurationError from exc
 
     try:
         valid = schema.validate(xml_root)
     except etree.XMLSchemaValidateError:
-        return _unsupported_xml(message_id, "XSD_VALIDATOR_ERROR", "The XML could not be processed by the schema validator.")
+        error = UntrustedXmlError("unsupported_xml", "XSD_VALIDATOR_ERROR", "The XML could not be processed by the schema validator.")
+        return _rejected(message_id, error.kind, error.as_error())
     error_entries = list(schema.error_log)
     errors = [
         {
