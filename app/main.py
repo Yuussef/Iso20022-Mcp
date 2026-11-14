@@ -9,9 +9,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from app.services.identifiers import validate_bic, validate_iban
 from app.services.knowledge_search import search_documents
 from app.services.postal_address import check_postal_addresses
 from app.services.registry import SchemaUnavailableError, supported_messages
+from app.services.sepa_sct import check_sepa_sct
 from app.services.validation import (
     MAX_XML_CHARS,
     SchemaConfigurationError,
@@ -23,7 +25,10 @@ from app.services.validation import (
 
 app = FastAPI(
     title="PayDoc AI API",
-    description="Deterministic ISO 20022 schema validation, CBPR+ postal address checks and source-backed lookup.",
+    description=(
+        "Deterministic ISO 20022 schema validation, SEPA Credit Transfer and CBPR+ usage-rule checks, "
+        "IBAN/BIC validation and source-backed lookup."
+    ),
     version="0.1.0",
 )
 app.add_middleware(
@@ -45,6 +50,18 @@ class PostalAddressCheckRequest(BaseModel):
         default=False,
         description="Treat unstructured addresses as errors. Off by default because Swift deferred their removal.",
     )
+
+
+class SepaCheckRequest(BaseModel):
+    xml: str = Field(min_length=1, max_length=MAX_XML_CHARS)
+    enforce_unstructured_address_removal: bool = Field(
+        default=False,
+        description="Treat unstructured addresses as errors. Off by default because the EPC deferred their end date.",
+    )
+
+
+class IdentifierRequest(BaseModel):
+    value: str = Field(min_length=1, max_length=100)
 
 
 class SearchRequest(BaseModel):
@@ -93,6 +110,24 @@ def check_postal_address(payload: PostalAddressCheckRequest) -> dict[str, Any]:
         return check_postal_addresses(payload.xml, payload.enforce_unstructured_removal)
     except ValidatorUnavailableError as exc:
         raise HTTPException(status_code=503, detail="Install the lxml dependency to check XML.") from exc
+
+
+@app.post("/api/v1/checks/sepa-sct")
+def check_sepa_credit_transfer(payload: SepaCheckRequest) -> dict[str, Any]:
+    try:
+        return check_sepa_sct(payload.xml, payload.enforce_unstructured_address_removal)
+    except ValidatorUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Install the lxml dependency to check XML.") from exc
+
+
+@app.post("/api/v1/identifiers/iban")
+def check_iban(payload: IdentifierRequest) -> dict[str, Any]:
+    return validate_iban(payload.value)
+
+
+@app.post("/api/v1/identifiers/bic")
+def check_bic(payload: IdentifierRequest) -> dict[str, Any]:
+    return validate_bic(payload.value)
 
 
 @app.post("/api/v1/search")

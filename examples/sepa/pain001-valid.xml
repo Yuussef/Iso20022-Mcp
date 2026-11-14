@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic SEPA customer credit transfer initiation (pain.001.001.09). IBANs are the IBAN Registry examples. -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>DEMO-PAIN-0001</MsgId>
+      <CreDtTm>2026-11-14T09:00:00</CreDtTm>
+      <NbOfTxs>2</NbOfTxs>
+      <InitgPty><Nm>Atelier Demo SARL</Nm></InitgPty>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>DEMO-BATCH-01</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <PmtTpInf><SvcLvl><Cd>SEPA</Cd></SvcLvl></PmtTpInf>
+      <ReqdExctnDt><Dt>2026-11-16</Dt></ReqdExctnDt>
+      <Dbtr><Nm>Atelier Demo SARL</Nm><PstlAdr><TwnNm>Paris</TwnNm><Ctry>FR</Ctry></PstlAdr></Dbtr>
+      <DbtrAcct><Id><IBAN>FR1420041010050500013M02606</IBAN></Id></DbtrAcct>
+      <DbtrAgt><FinInstnId><BICFI>DEMOFRPPXXX</BICFI></FinInstnId></DbtrAgt>
+      <ChrgBr>SLEV</ChrgBr>
+      <CdtTrfTxInf>
+        <PmtId><EndToEndId>SUPPLIER-0001</EndToEndId></PmtId>
+        <Amt><InstdAmt Ccy="EUR">980.00</InstdAmt></Amt>
+        <Cdtr><Nm>Beispiel GmbH</Nm></Cdtr>
+        <CdtrAcct><Id><IBAN>DE89370400440532013000</IBAN></Id></CdtrAcct>
+        <RmtInf><Ustrd>Order 778</Ustrd></RmtInf>
+      </CdtTrfTxInf>
+      <CdtTrfTxInf>
+        <PmtId><EndToEndId>SUPPLIER-0002</EndToEndId></PmtId>
+        <Amt><InstdAmt Ccy="EUR">15.30</InstdAmt></Amt>
+        <Cdtr><Nm>Voorbeeld BV</Nm></Cdtr>
+        <CdtrAcct><Id><IBAN>NL91ABNA0417164300</IBAN></Id></CdtrAcct>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic SEPA Credit Transfer (pacs.008.001.08) for the SEPA check. IBANs are the IBAN Registry examples. -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>DEMO-MSG-0001</MsgId>
+      <CreDtTm>2026-11-14T10:00:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <TtlIntrBkSttlmAmt Ccy="EUR">1250.50</TtlIntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-11-16</IntrBkSttlmDt>
+      <SttlmInf><SttlmMtd>CLRG</SttlmMtd></SttlmInf>
+      <PmtTpInf><SvcLvl><Cd>SEPA</Cd></SvcLvl></PmtTpInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <InstrId>DEMO-INSTR-1</InstrId>
+        <EndToEndId>INVOICE-2026-0042</EndToEndId>
+        <TxId>DEMO-TX-0001</TxId>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="EUR">1250.50</IntrBkSttlmAmt>
+      <ChrgBr>SLEV</ChrgBr>
+      <Dbtr>
+        <Nm>Atelier Demo SARL</Nm>
+        <PstlAdr><StrtNm>Rue de la Demo</StrtNm><BldgNb>12</BldgNb><PstCd>75001</PstCd><TwnNm>Paris</TwnNm><Ctry>FR</Ctry></PstlAdr>
+      </Dbtr>
+      <DbtrAcct><Id><IBAN>FR1420041010050500013M02606</IBAN></Id></DbtrAcct>
+      <DbtrAgt><FinInstnId><BICFI>DEMOFRPPXXX</BICFI></FinInstnId></DbtrAgt>
+      <CdtrAgt><FinInstnId><BICFI>DEMODEFFXXX</BICFI></FinInstnId></CdtrAgt>
+      <Cdtr>
+        <Nm>Beispiel GmbH</Nm>
+        <PstlAdr><TwnNm>Frankfurt am Main</TwnNm><Ctry>DE</Ctry><AdrLine>Musterstrasse 5</AdrLine></PstlAdr>
+      </Cdtr>
+      <CdtrAcct><Id><IBAN>DE89370400440532013000</IBAN></Id></CdtrAcct>
+      <RmtInf><Ustrd>Invoice 2026-0042</Ustrd></RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

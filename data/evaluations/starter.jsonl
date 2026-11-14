@@ -3,3 +3,6 @@
 {"id":"validation-unconfigured-001","kind":"validation-configuration","message_id":"pacs.008.001.08","fixture":"examples/validate-request.json","expected_http_status":409,"expected_kind":"schema_unavailable","note":"Expected only while no matching local XSD is installed."}
 {"id": "search-address-001", "kind": "retrieval", "query": "When are unstructured postal addresses removed and what is a hybrid address?", "expected_source_ids": ["cbpr-postal-address"], "review_status": "starter-case"}
 {"id": "search-address-002", "kind": "retrieval", "query": "Is a postal address needed for an agent identified by BIC?", "expected_source_ids": ["cbpr-postal-address"], "review_status": "starter-case"}
+{"id": "search-sepa-001", "kind": "retrieval", "query": "Which charge bearer code and currency does a SEPA credit transfer allow?", "expected_source_ids": ["sepa-credit-transfer"], "review_status": "starter-case"}
+{"id": "search-sepa-002", "kind": "retrieval", "query": "When is the payer address mandatory in SEPA for a Swiss or UK bank?", "expected_source_ids": ["sepa-credit-transfer"], "review_status": "starter-case"}
+{"id": "search-sepa-003", "kind": "retrieval", "query": "Which countries are part of SEPA?", "expected_source_ids": ["sepa-credit-transfer"], "review_status": "starter-case"}
