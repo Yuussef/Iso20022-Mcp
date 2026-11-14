@@ -5,6 +5,7 @@ import SearchPanel from "./components/SearchPanel.jsx";
 import AssistantPanel from "./components/AssistantPanel.jsx";
 import CbprCheckPanel from "./components/CbprCheckPanel.jsx";
 import SepaCheckPanel from "./components/SepaCheckPanel.jsx";
+import Mt103Panel from "./components/Mt103Panel.jsx";
 
 const API = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 const NAVIGATION = [
@@ -12,6 +13,7 @@ const NAVIGATION = [
   { id: "validate", label: "Validate XML", glyph: "⌘" },
   { id: "sepa", label: "SEPA check", glyph: "€" },
   { id: "cbpr", label: "CBPR+ check", glyph: "⇄" },
+  { id: "mt103", label: "MT103 → pacs.008", glyph: "⇢" },
   { id: "knowledge", label: "Knowledge base", glyph: "⌕" },
   { id: "assistant", label: "AI assistant", glyph: "✳" },
 ];
@@ -90,6 +92,7 @@ export default function App() {
           {page === "validate" && <ValidatorPanel messages={messages} configured={messageSetup} api={API} />}
           {page === "sepa" && <SepaCheckPanel api={API} />}
           {page === "cbpr" && <CbprCheckPanel api={API} />}
+          {page === "mt103" && <Mt103Panel api={API} />}
           {page === "knowledge" && <SearchPanel api={API} />}
           {page === "assistant" && <AssistantPanel api={API} />}
         </div>

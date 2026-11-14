@@ -18,8 +18,9 @@
 | IBAN (ISO 13616 registry + mod-97) and BIC (ISO 9362) validation | Implemented; offline, format only |
 | CBPR+ pacs.008 check (UETR, single transaction, charges, ISO 4217 decimals, IBAN/BIC, characters) | Implemented; needs no XSD; synthetic samples included |
 | Payment summary (parties, amounts, bank chain, remittance) for pacs.008 and pain.001 | Implemented |
+| MT103 → pacs.008 draft with a field-by-field conversion report | Implemented; migration aid, not a certified translator |
 | CBPR+ postal address check (structured / hybrid / unstructured) | Implemented; included in the CBPR+ check |
-| Local source manifest and keyword search with provenance links | Implemented; starter corpus contains four original project notes |
+| Local source manifest and keyword search with provenance links | Implemented; starter corpus contains five original project notes |
 | React dashboard, validator form, address check, XML file upload, search UI | Implemented |
 | MCP server exposing shared domain operations over stdio | Implemented; install the optional `ai` dependencies |
 | Bedrock Converse client invoking MCP tools and returning sources | Implemented; requires AWS credentials and a configured model with tool use |
@@ -37,12 +38,13 @@ Payment developers need to inspect message structure, understand validation erro
 - **Structured diagnostics:** return schema/parser error code, message, line, column, and XPath when available.
 - **CBPR+ pacs.008 check:** UETR, one transaction per message, DEBT/CRED/SHAR and charges information, ISO 4217 decimals, IBAN/BIC validity, the CBPR+ character set and postal addresses (see [below](#cbpr-pacs008-check)).
 - **Payment summary:** who pays whom, how much, through which banks and why, for people and agents.
+- **MT103 → pacs.008:** draft the CBPR+ pacs.008 from an MT103 and report, field by field, what is mapped, defaulted, left unstructured, truncated or lost; the draft is then checked against CBPR+ (see [below](#mt103--pacs008-conversion)).
 - **SEPA Credit Transfer check:** apply the EPC 2025 SCT rules that an XSD cannot enforce, such as euro-only amounts, SLEV, IBAN-only accounts and the non-EEA debtor address rule (see [below](#sepa-credit-transfer-check)).
 - **IBAN and BIC validation:** national length and structure from the Swift IBAN Registry, mod-97 check digits, ISO 9362 BIC format, test BICs and SEPA membership. Offline, so it proves the format, not that the account exists.
 - **CBPR+ postal address check:** classify every `PstlAdr` as structured, hybrid or unstructured and report rule violations with severity, XPath and a suggested fix (see [below](#cbpr-postal-address-check)).
 - **Safe XML parsing:** disable network access, entity resolution, and DTD loading; reject any DOCTYPE; cap XML input length.
 - **Source-backed lookup:** search local Markdown references and return a source ID, excerpt, and provenance link.
-- **MCP tools:** list versions, validate a message, check SEPA credit transfers, CBPR+ pacs.008 and postal addresses, summarise a payment, validate IBANs and BICs, search local documents, and look up evidence related to an error.
+- **MCP tools:** list versions, validate a message, check SEPA credit transfers, CBPR+ pacs.008 and postal addresses, summarise a payment, convert an MT103, validate IBANs and BICs, search local documents, and look up evidence related to an error.
 - **Optional AI assistant:** Bedrock receives tool definitions through the MCP SDK and surfaces returned sources; it does not decide whether XML passes the XSD.
 - **React + FastAPI:** a responsive dashboard, validator, knowledge search, and assistant call the real API.
 
@@ -89,6 +91,25 @@ Sources: the [EPC SCT rulebook and implementation guidelines](https://www.europe
 
 Sources: the CBPR+ pacs.008.001.08 guideline as published on the [Goldman Sachs developer portal](https://developer.gs.com/docs/services/transaction-banking/cbpr+-pacs008/), the [Clearstream CBPR+ user guide](https://www.clearstream.com/caas/v1/media/4814538/data/ca917a93e9390d399c6c34ebe14032d0/cbpr-ug.pdf) (UETR mandatory in pacs.008), and ISO 4217 List One from [SIX](https://www.six-group.com/en/products-services/financial-information/market-reference-data/data-standards.html) in [`data/reference/iso4217.json`](data/reference/iso4217.json). Bank-specific rules are not applied. Samples are in [`examples/cbpr/`](examples/cbpr).
 
+## MT103 → pacs.008 conversion
+
+`POST /api/v1/convert/mt103` (MCP tool `convert_mt103_to_pacs008`) reads an MT103, with or without its `{1:}{2:}{3:}{4:}` blocks, and drafts a CBPR+ pacs.008.001.08. Every field gets a report line with a status: `mapped`, `defaulted`, `unstructured`, `truncated`, `missing` or `unmapped`. The draft then goes through `check_cbpr_pacs008`, so the gaps that MT data leaves become visible. A legacy MT103 with no UETR and free-text addresses, for example, fails the UETR rule and gets unstructured-address warnings.
+
+| MT103 | pacs.008 |
+| --- | --- |
+| `{3:{121:…}}` | `PmtId/UETR` |
+| `:20:` | `GrpHdr/MsgId`, `PmtId/InstrId` |
+| `/ROC/` in `:70:` or `:72:` | `PmtId/EndToEndId` (otherwise `NOTPROVIDED`) |
+| `:32A:` / `:33B:` / `:36:` | `IntrBkSttlmDt` + `IntrBkSttlmAmt` / `InstdAmt` / `XchgRate` |
+| `:50A/F/K:` / `:59/59A/59F:` | `Dbtr` + `DbtrAcct` / `Cdtr` + `CdtrAcct` (option F gives a hybrid address; K stays unstructured) |
+| `:52a:` / `:56A:` / `:57a:` | `DbtrAgt` / `IntrmyAgt1` / `CdtrAgt` |
+| `:71A:` OUR / BEN / SHA | `ChrgBr` DEBT / CRED / SHAR |
+| `:71F:` / `:71G:` | `ChrgsInf` (agent `NOTPROVIDED`) |
+| `:70:` | `RmtInf/Ustrd` (140 characters) |
+| `:72:` `/ACC/` / other codes | `InstrForCdtrAgt` / `InstrForNxtAgt` |
+
+The mapping follows public bank guides: [Barclays MT103 vs pacs.008](https://www.barclayscorporate.com/content/dam/barclayscorporate-com/images/insights/innovation/ISO-Further-information-slides-15-16-18.pdf), [J.P. Morgan ISO 20022 mapping guide](https://www.jpmorgan.com/content/dam/jpmorgan/documents/payments/iso20022-mapping-guide.pdf) and the [Bank of Jamaica RTGS annex](https://boj.org.jm/wp-content/uploads/2024/02/Annex-I-Hybrid-Outputs.pdf). It is a **migration aid, not a certified Swift translation**: Swift's official translation rules are on MyStandards. Samples are in [`examples/mt103/`](examples/mt103).
+
 ## CBPR+ postal address check
 
 The ISO 20022 XSD accepts addresses that CBPR+ rejects. `POST /api/v1/checks/postal-address` (and the MCP tool `check_cbpr_postal_addresses`) inspects every `PstlAdr` in a message and needs no schema file.
@@ -126,6 +147,7 @@ React + Vite browser app
   ├── POST /api/v1/checks/sepa-sct ──> EPC SEPA Credit Transfer rules (no XSD needed)
   ├── POST /api/v1/checks/cbpr-pacs008 ──> CBPR+ rules + addresses (no XSD needed)
   ├── POST /api/v1/summaries/payment ──> parties, amounts, bank chain
+  ├── POST /api/v1/convert/mt103 ──> pacs.008 draft + conversion report + CBPR+ check
   ├── POST /api/v1/checks/postal-address ──> CBPR+ address rules (no XSD needed)
   ├── POST /api/v1/identifiers/{iban,bic} ──> IBAN Registry + mod-97, ISO 9362
   ├── POST /api/v1/search   ──> local sources + provenance
@@ -303,6 +325,7 @@ Initial tools:
 | `validate_iban` / `validate_bic` | `iban` / `bic` | Format, structure, check digits, parts and SEPA membership |
 | `check_cbpr_pacs008` | `xml`, optional `enforce_unstructured_removal` | CBPR+ message, transaction and address findings |
 | `summarize_payment` | `xml` | Parties, amounts, dates, charges, bank chain and remittance for pacs.008 or pain.001 |
+| `convert_mt103_to_pacs008` | `mt103` | pacs.008 draft, field-by-field report and CBPR+ check of the draft |
 | `search_iso_documents` | `query`, optional `message_id`, `limit` | Excerpts with source ID, version, section/page, and provenance |
 | `explain_validation_error` | `message_id`, error details | Matching source excerpts; no invented rule when no source matches |
 

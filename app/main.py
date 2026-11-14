@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from app.services.cbpr_pacs008 import check_cbpr_pacs008
 from app.services.identifiers import validate_bic, validate_iban
 from app.services.knowledge_search import search_documents
+from app.services.mt103 import MAX_MT_CHARS, Mt103Error, convert_mt103
 from app.services.payment_summary import summarize_payment
 from app.services.postal_address import check_postal_addresses
 from app.services.registry import SchemaUnavailableError, supported_messages
@@ -64,6 +65,10 @@ class SepaCheckRequest(BaseModel):
 
 class XmlRequest(BaseModel):
     xml: str = Field(min_length=1, max_length=MAX_XML_CHARS)
+
+
+class Mt103Request(BaseModel):
+    mt: str = Field(min_length=1, max_length=MAX_MT_CHARS, description="MT103 text, with or without the {1:}{2:}{3:}{4:} blocks.")
 
 
 class IdentifierRequest(BaseModel):
@@ -140,6 +145,16 @@ def summarize_credit_transfer(payload: XmlRequest) -> dict[str, Any]:
         return summarize_payment(payload.xml)
     except ValidatorUnavailableError as exc:
         raise HTTPException(status_code=503, detail="Install the lxml dependency to read XML.") from exc
+
+
+@app.post("/api/v1/convert/mt103")
+def convert_mt103_message(payload: Mt103Request) -> dict[str, Any]:
+    try:
+        return convert_mt103(payload.mt)
+    except Mt103Error as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValidatorUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Install the lxml dependency to build XML.") from exc
 
 
 @app.post("/api/v1/identifiers/iban")

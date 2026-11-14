@@ -9,3 +9,5 @@
 {"id": "search-cbpr-001", "kind": "retrieval", "query": "What format must the UETR have in a CBPR+ pacs.008?", "expected_source_ids": ["cbpr-pacs008"], "review_status": "starter-case"}
 {"id": "search-cbpr-002", "kind": "retrieval", "query": "When is charges information mandatory for CRED or SHAR?", "expected_source_ids": ["cbpr-pacs008"], "review_status": "starter-case"}
 {"id": "search-cbpr-003", "kind": "retrieval", "query": "How many decimals for a JPY amount?", "message_id": "pacs.008.001.08", "expected_source_ids": ["cbpr-pacs008"], "review_status": "starter-case"}
+{"id": "search-mt103-001", "kind": "retrieval", "query": "Which MT103 field becomes the end-to-end identification in pacs.008?", "expected_source_ids": ["mt103-to-pacs008"], "review_status": "starter-case"}
+{"id": "search-mt103-002", "kind": "retrieval", "query": "How is MT103 field 71A OUR BEN SHA translated?", "expected_source_ids": ["mt103-to-pacs008"], "review_status": "starter-case"}

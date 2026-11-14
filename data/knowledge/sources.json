@@ -26,5 +26,12 @@
     "message_id": "pacs.008.001.08",
     "url": "https://developer.gs.com/docs/services/transaction-banking/cbpr+-pacs008/",
     "file": "cbpr-pacs008.md"
+  },
+  {
+    "id": "mt103-to-pacs008",
+    "title": "From MT103 to pacs.008: what carries over and what is lost",
+    "message_id": null,
+    "url": "https://www.jpmorgan.com/content/dam/jpmorgan/documents/payments/iso20022-mapping-guide.pdf",
+    "file": "mt103-to-pacs008.md"
   }
 ]
