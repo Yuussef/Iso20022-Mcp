@@ -133,3 +133,41 @@ def test_postal_address_check_handles_entities_without_500() -> None:
 @pytest.mark.parametrize("payload", [{"xml": ""}, {}, {"xml": "x" * 1_000_001}, {"xml": "<a/>", "enforce_unstructured_removal": "maybe"}])
 def test_postal_address_check_rejects_invalid_requests(payload: dict) -> None:
     assert client.post("/api/v1/checks/postal-address", json=payload).status_code == 422
+
+
+def _sepa_sample(name: str) -> str:
+    return (Path(__file__).resolve().parents[1] / "examples" / "sepa" / f"{name}.xml").read_text(encoding="utf-8")
+
+
+def test_sepa_check_endpoint() -> None:
+    valid = client.post("/api/v1/checks/sepa-sct", json={"xml": _sepa_sample("pacs008-valid")}).json()
+    problems = client.post("/api/v1/checks/sepa-sct", json={"xml": _sepa_sample("pacs008-problems")}).json()
+
+    assert valid["compliant"] is True
+    assert problems["compliant"] is False
+    assert problems["summary"]["errors"] >= 10
+
+
+def test_sepa_check_enforce_flag() -> None:
+    xml = _sepa_sample("pacs008-problems")
+
+    relaxed = client.post("/api/v1/checks/sepa-sct", json={"xml": xml}).json()
+    enforced = client.post("/api/v1/checks/sepa-sct", json={"xml": xml, "enforce_unstructured_address_removal": True}).json()
+
+    assert enforced["summary"]["errors"] == relaxed["summary"]["errors"] + 1
+
+
+@pytest.mark.parametrize(
+    ("kind", "value", "valid"),
+    [("iban", "DE89 3704 0044 0532 0130 00", True), ("iban", "DE00", False), ("bic", "DEUTDEFF", True)],
+)
+def test_identifier_endpoints(kind: str, value: str, valid: bool) -> None:
+    response = client.post(f"/api/v1/identifiers/{kind}", json={"value": value})
+
+    assert response.status_code == 200
+    assert response.json()["valid"] is valid
+
+
+@pytest.mark.parametrize("payload", [{"value": ""}, {}, {"value": "x" * 101}])
+def test_identifier_endpoints_reject_invalid_requests(payload: dict) -> None:
+    assert client.post("/api/v1/identifiers/iban", json=payload).status_code == 422

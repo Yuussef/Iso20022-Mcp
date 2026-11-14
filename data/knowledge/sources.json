@@ -12,5 +12,12 @@
     "message_id": null,
     "url": "https://www.swift.com/standards/iso-20022/iso-20022-faqs/iso-20022-removal-unstructured-address",
     "file": "cbpr-postal-address.md"
+  },
+  {
+    "id": "sepa-credit-transfer",
+    "title": "SEPA Credit Transfer (SCT) usage rules for pacs.008 and pain.001",
+    "message_id": null,
+    "url": "https://www.europeanpaymentscouncil.eu/what-we-do/epc-payment-schemes/sepa-credit-transfer-sct/sepa-credit-transfer-rulebook-and",
+    "file": "sepa-credit-transfer.md"
   }
 ]

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic pacs.008 that breaks several EPC SEPA Credit Transfer rules. Not a real payment. -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>DEMO//MSG-0002</MsgId>
+      <CreDtTm>2026-11-14T10:00:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <IntrBkSttlmDt>2026-11-16</IntrBkSttlmDt>
+      <SttlmInf><SttlmMtd>CLRG</SttlmMtd></SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <EndToEndId>/FACTURE-é-42</EndToEndId>
+        <TxId>DEMO-TX-0002</TxId>
+      </PmtId>
+      <PmtTpInf><SvcLvl><Cd>URGP</Cd></SvcLvl></PmtTpInf>
+      <IntrBkSttlmAmt Ccy="USD">1250.505</IntrBkSttlmAmt>
+      <ChrgBr>SHAR</ChrgBr>
+      <Dbtr>
+        <Nm>Atelier Démo SARL</Nm>
+      </Dbtr>
+      <DbtrAcct><Id><IBAN>FR1420041010050500013M02607</IBAN></Id></DbtrAcct>
+      <DbtrAgt><FinInstnId><BICFI>DEMOCHZZXXX</BICFI></FinInstnId></DbtrAgt>
+      <CdtrAgt><FinInstnId><BICFI>demodeff</BICFI></FinInstnId></CdtrAgt>
+      <Cdtr>
+        <Nm>Beispiel GmbH</Nm>
+        <PstlAdr><AdrLine>Musterstrasse 5</AdrLine><AdrLine>60311 Frankfurt</AdrLine><AdrLine>Germany</AdrLine></PstlAdr>
+      </Cdtr>
+      <CdtrAcct><Id><IBAN>AE070331234567890123456</IBAN></Id></CdtrAcct>
+      <RmtInf>
+        <Ustrd>Invoice 2026-0042</Ustrd>
+        <Strd><CdtrRefInf><Tp><CdOrPrtry><Cd>SCOR</Cd></CdOrPrtry></Tp><Ref>RF18539007547034</Ref></CdtrRefInf></Strd>
+      </RmtInf>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

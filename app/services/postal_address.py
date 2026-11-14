@@ -23,6 +23,12 @@ import re
 from typing import Any
 
 from app.services.xml_safety import UntrustedXmlError, parse_untrusted_xml
+from app.services.xml_tools import children as _children
+from app.services.xml_tools import finding as _finding
+from app.services.xml_tools import local_name as _local_name
+from app.services.xml_tools import message_id as _message_id
+from app.services.xml_tools import path as _path
+from app.services.xml_tools import text as _text
 
 RULEBOOK = "CBPR+ postal address rules (hybrid option since SR2025, removal of unstructured addresses in SR2026)"
 
@@ -69,7 +75,6 @@ MAX_REPORTED_ADDRESSES = 200
 
 COUNTRY_CODE = re.compile(r"^[A-Z]{2}$")
 POSTCODE_LIKE = re.compile(r"\d{3,}")
-MESSAGE_NAMESPACE = re.compile(r"urn:iso:std:iso:20022:tech:xsd:([a-z]{4}\.\d{3}\.\d{3}\.\d{2,3})$")
 
 ROLE_LABELS = {
     "Dbtr": "Debtor",
@@ -91,48 +96,6 @@ ROLE_LABELS = {
     "InstdRmbrsmntAgt": "Instructed reimbursement agent",
     "ThrdRmbrsmntAgt": "Third reimbursement agent",
 }
-
-
-def _local_name(element: Any) -> str:
-    tag = element.tag
-    return tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""
-
-
-def _children(element: Any) -> list[Any]:
-    return [child for child in element if isinstance(child.tag, str)]
-
-
-def _text(element: Any) -> str:
-    return (element.text or "").strip()
-
-
-def _path(element: Any) -> str:
-    parts = []
-    node = element
-    while node is not None:
-        name = _local_name(node)
-        parent = node.getparent()
-        if parent is not None:
-            same_name = [sibling for sibling in _children(parent) if _local_name(sibling) == name]
-            if len(same_name) > 1:
-                name = f"{name}[{same_name.index(node) + 1}]"
-        parts.append(name)
-        node = parent
-    return "/" + "/".join(reversed(parts))
-
-
-def _message_id(root: Any) -> str | None:
-    for element in root.iter():
-        if not isinstance(element.tag, str) or not element.tag.startswith("{"):
-            continue
-        match = MESSAGE_NAMESPACE.match(element.tag[1:].split("}", 1)[0])
-        if match and not match.group(1).startswith("head."):
-            return match.group(1)
-    return None
-
-
-def _finding(rule: str, severity: str, message: str, xpath: str, suggestion: str | None = None) -> dict[str, Any]:
-    return {"rule": rule, "severity": severity, "message": message, "xpath": xpath, "suggestion": suggestion}
 
 
 def _check_address(address: Any, enforce_removal: bool) -> dict[str, Any]:

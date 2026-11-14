@@ -4,9 +4,12 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
+from app.services.identifiers import validate_bic as validate_bic_service
+from app.services.identifiers import validate_iban as validate_iban_service
 from app.services.knowledge_search import search_documents
 from app.services.postal_address import check_postal_addresses
 from app.services.registry import SchemaUnavailableError, supported_messages
+from app.services.sepa_sct import check_sepa_sct as check_sepa_sct_service
 from app.services.validation import (
     SchemaConfigurationError,
     ValidatorUnavailableError,
@@ -60,6 +63,42 @@ def check_cbpr_postal_addresses(xml: str, enforce_unstructured_removal: bool = F
         return {"kind": "validator_unavailable", "compliant": False, "addresses": [], "errors": []}
     except ValueError as exc:
         return {"kind": "invalid_input", "compliant": False, "addresses": [], "errors": [], "detail": str(exc)}
+
+
+@mcp.tool()
+def check_sepa_sct(xml: str, enforce_unstructured_address_removal: bool = False) -> dict[str, Any]:
+    """Check a SEPA Credit Transfer (pacs.008 interbank or pain.001 customer initiation) against the EPC 2025 rules.
+
+    Covers euro-only amounts and limits, SLEV charge bearer, SEPA service level, IBAN-only
+    accounts (checksum and SEPA country), BICFI-only agents, the Latin character set, name and
+    remittance limits, and EPC address rules (including the debtor address required when an agent
+    is in a non-EEA SEPA country). Needs no XSD. Report findings exactly as returned; they cover
+    EPC usage rules only, not the whole message or the bank's own rules.
+    """
+    try:
+        return check_sepa_sct_service(xml, enforce_unstructured_address_removal)
+    except ValidatorUnavailableError:
+        return {"kind": "validator_unavailable", "compliant": False, "transactions": [], "errors": []}
+    except ValueError as exc:
+        return {"kind": "invalid_input", "compliant": False, "transactions": [], "errors": [], "detail": str(exc)}
+
+
+@mcp.tool()
+def validate_iban(iban: str) -> dict[str, Any]:
+    """Check an IBAN's format, national length and structure (Swift IBAN Registry) and its mod-97 check digits.
+
+    Also says whether the country is in the SEPA schemes' scope. It does not prove the account exists.
+    """
+    return validate_iban_service(iban)
+
+
+@mcp.tool()
+def validate_bic(bic: str) -> dict[str, Any]:
+    """Check a BIC's ISO 9362 format and describe its parts (institution, country, location, branch, test BIC, SEPA country).
+
+    It does not prove the bank exists; that needs a BIC directory.
+    """
+    return validate_bic_service(bic)
 
 
 @mcp.tool()

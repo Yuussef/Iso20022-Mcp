@@ -4,7 +4,7 @@
 
 *PayDoc AI is the product name; the repository is [Iso20022-Mcp](https://github.com/Yuussef/Iso20022-Mcp).*
 
-**A local-first ISO 20022 developer workbench built with FastAPI and React.** It validates XML against an explicitly selected local XSD, checks postal addresses against the CBPR+ usage rules that an XSD cannot enforce, searches a small local reference corpus, and exposes the same operations as MCP tools. An optional AWS Bedrock client can call those MCP tools before answering.
+**A local-first ISO 20022 developer workbench built with FastAPI and React.** It validates XML against an explicitly selected local XSD, checks SEPA Credit Transfers against the EPC rules and postal addresses against the CBPR+ rules that an XSD cannot enforce, validates IBANs and BICs offline, searches a small local reference corpus, and exposes the same operations as MCP tools. An optional AWS Bedrock client can call those MCP tools before answering.
 
 > This is a portfolio project, not a payment processor, compliance product, or banking system. Use synthetic XML only.
 
@@ -14,8 +14,10 @@
 | --- | --- |
 | FastAPI health and schema-registry endpoints | Implemented |
 | Secure XML parsing and local XSD validation | Implemented; includes a synthetic demo XSD, not an official ISO 20022 schema |
+| SEPA Credit Transfer check (EPC 2025 rules, pacs.008 and pain.001) | Implemented; needs no XSD; synthetic samples included |
+| IBAN (ISO 13616 registry + mod-97) and BIC (ISO 9362) validation | Implemented; offline, format only |
 | CBPR+ postal address check (structured / hybrid / unstructured) | Implemented; needs no XSD; synthetic pacs.008 samples included |
-| Local source manifest and keyword search with provenance links | Implemented; starter corpus contains two original project notes |
+| Local source manifest and keyword search with provenance links | Implemented; starter corpus contains three original project notes |
 | React dashboard, validator form, address check, XML file upload, search UI | Implemented |
 | MCP server exposing shared domain operations over stdio | Implemented; install the optional `ai` dependencies |
 | Bedrock Converse client invoking MCP tools and returning sources | Implemented; requires AWS credentials and a configured model with tool use |
@@ -31,14 +33,40 @@ Payment developers need to inspect message structure, understand validation erro
 
 - **Version-explicit validation:** choose a registered message ID such as `pacs.008.001.08`; the server validates against its local XSD.
 - **Structured diagnostics:** return schema/parser error code, message, line, column, and XPath when available.
+- **SEPA Credit Transfer check:** apply the EPC 2025 SCT rules that an XSD cannot enforce, such as euro-only amounts, SLEV, IBAN-only accounts and the non-EEA debtor address rule (see [below](#sepa-credit-transfer-check)).
+- **IBAN and BIC validation:** national length and structure from the Swift IBAN Registry, mod-97 check digits, ISO 9362 BIC format, test BICs and SEPA membership. Offline, so it proves the format, not that the account exists.
 - **CBPR+ postal address check:** classify every `PstlAdr` as structured, hybrid or unstructured and report rule violations with severity, XPath and a suggested fix (see [below](#cbpr-postal-address-check)).
 - **Safe XML parsing:** disable network access, entity resolution, and DTD loading; reject any DOCTYPE; cap XML input length.
 - **Source-backed lookup:** search local Markdown references and return a source ID, excerpt, and provenance link.
-- **MCP tools:** list versions, validate a message, check postal addresses, search local documents, and look up evidence related to an error.
+- **MCP tools:** list versions, validate a message, check SEPA credit transfers and postal addresses, validate IBANs and BICs, search local documents, and look up evidence related to an error.
 - **Optional AI assistant:** Bedrock receives tool definitions through the MCP SDK and surfaces returned sources; it does not decide whether XML passes the XSD.
 - **React + FastAPI:** a responsive dashboard, validator, knowledge search, and assistant call the real API.
 
 XSD validation only checks the constraints represented by the chosen schema. It does not prove compliance with scheme-specific, community, or bank usage guidelines. ISO 20022 itself notes that implementation requirements depend on the community using a message. See the [official FAQ](https://www.iso20022.org/faq).
+
+## SEPA Credit Transfer check
+
+`POST /api/v1/checks/sepa-sct` (MCP tool `check_sepa_sct`) checks a pacs.008 (interbank) or pain.001 (customer to bank) against the EPC 2025 SCT implementation guidelines. It needs no XSD.
+
+| Rule | Severity | What it catches |
+| --- | --- | --- |
+| `SEPA_CURRENCY`, `SEPA_AMOUNT_RANGE`, `SEPA_AMOUNT_DECIMALS` | error | Non-euro amount, outside 0.01 – 999 999 999.99, more than two decimals |
+| `SEPA_CHARGE_BEARER` | error | Charge bearer other than `SLEV` (mandatory in pacs.008) |
+| `SEPA_SERVICE_LEVEL`, `SEPA_SERVICE_LEVEL_MISSING` | error | Service level other than `SEPA`, or none |
+| `SEPA_ACCOUNT_NOT_IBAN`, `SEPA_IBAN_*`, `SEPA_IBAN_OUTSIDE_SEPA` | error | Account not an IBAN, invalid IBAN, or IBAN country outside SEPA |
+| `SEPA_AGENT_NOT_BIC`, `SEPA_BIC_*` | error | Agent identified by anything other than a valid `BICFI` |
+| `SEPA_REFERENCE_FORMAT` | error | Identifier outside the Latin set, starting or ending with `/`, or containing `//` |
+| `SEPA_CHARACTER_SET` | warning | Names, remittance or address lines outside the Latin set (allowed only by agreement) |
+| `SEPA_NAME_*`, `SEPA_PARTY_MISSING` | error | Missing debtor or creditor, or name over 70 characters |
+| `SEPA_REMITTANCE_*` | error | Both structured and unstructured, repeated, or over 140 characters |
+| `SEPA_ADDRESS_*` | error / warning | EPC structured, hybrid and unstructured address rules; unstructured is a warning while the end date is deferred |
+| `SEPA_DEBTOR_ADDRESS_REQUIRED`, `SEPA_ADDRESS_COUNTRY_REQUIRED` | error | Debtor address and country missing when an agent is in a non-EEA SEPA country (for example CH or GB) |
+
+**Address end date.** The EPC planned to stop unstructured addresses in November 2026. In September 2026 it [delayed that end date](https://www.europeanpaymentscouncil.eu/sites/default/files/kb/file/2026-09/EPC153-22%20v2.2%20EPC%20guidance%20document%20-%20Provision%20of%20Addresses%20under%20the%20EPC%20Payment%20Schemes.pdf) for all five EPC schemes without setting a new one. Set `enforce_unstructured_address_removal` to simulate it.
+
+Sources: the [EPC SCT rulebook and implementation guidelines](https://www.europeanpaymentscouncil.eu/what-we-do/epc-payment-schemes/sepa-credit-transfer-sct/sepa-credit-transfer-rulebook-and) (EPC115-06 and EPC132-08, 2025 v1.0), [EPC409-09 v8.0](https://www.europeanpaymentscouncil.eu/document-library/other/epc-list-sepa-scheme-countries) for SEPA countries, and the [Swift IBAN Registry](https://www.swift.com/standards/data-standards/iban-international-bank-account-number) in [`data/reference/`](data/reference). The check covers EPC usage rules only; a bank or clearing house may add its own.
+
+`POST /api/v1/identifiers/iban` and `/identifiers/bic` (MCP tools `validate_iban`, `validate_bic`) validate a single identifier. Synthetic samples are in [`examples/sepa/`](examples/sepa).
 
 ## CBPR+ postal address check
 
@@ -74,7 +102,9 @@ React + Vite browser app
   ├── GET  /api/v1/health
   ├── GET  /api/v1/messages
   ├── POST /api/v1/validate ──> local, versioned XSD
+  ├── POST /api/v1/checks/sepa-sct ──> EPC SEPA Credit Transfer rules (no XSD needed)
   ├── POST /api/v1/checks/postal-address ──> CBPR+ address rules (no XSD needed)
+  ├── POST /api/v1/identifiers/{iban,bic} ──> IBAN Registry + mod-97, ISO 9362
   ├── POST /api/v1/search   ──> local sources + provenance
   └── POST /api/v1/ask      ──> Bedrock Converse ──> MCP client ──> MCP tools
 
@@ -246,6 +276,8 @@ Initial tools:
 | `list_supported_messages` | none | Registered message IDs/versions and local schema availability |
 | `validate_message` | `message_id`, `xml` | Deterministic validity and structured diagnostics |
 | `check_cbpr_postal_addresses` | `xml`, optional `enforce_unstructured_removal` | Per-address format and CBPR+ findings with XPath and suggested fix |
+| `check_sepa_sct` | `xml`, optional `enforce_unstructured_address_removal` | Per-transaction EPC SCT findings with XPath and suggested fix |
+| `validate_iban` / `validate_bic` | `iban` / `bic` | Format, structure, check digits, parts and SEPA membership |
 | `search_iso_documents` | `query`, optional `message_id`, `limit` | Excerpts with source ID, version, section/page, and provenance |
 | `explain_validation_error` | `message_id`, error details | Matching source excerpts; no invented rule when no source matches |
 
