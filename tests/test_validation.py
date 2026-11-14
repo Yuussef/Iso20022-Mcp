@@ -67,17 +67,16 @@ def test_malformed_xml_is_reported_without_raising(schema_dir: Path, xml: str) -
     assert len(result["errors"][0]["message"]) <= 500
 
 
-# Known bug: entities are correctly left unexpanded by the parser, but lxml then raises
-# XMLSchemaValidateError ("Internal error in XML Schema validation") on the unresolved
-# entity reference. validate_message does not catch it, so the API answers HTTP 500
-# instead of a structured invalid result. Remove these markers once that is handled.
-ENTITY_BUG = pytest.mark.xfail(
-    strict=True,
-    reason="validate_message does not catch XMLSchemaValidateError for unresolved entity references",
-)
+def _assert_dtd_rejected(result: dict) -> None:
+    assert result["valid"] is False
+    assert result["kind"] == "unsupported_xml"
+    assert result["errors"][0]["code"] == "DTD_NOT_ALLOWED"
 
 
-@ENTITY_BUG
+def test_doctype_without_entities_is_rejected(schema_dir: Path) -> None:
+    _assert_dtd_rejected(validate_message(DEMO_MESSAGE_ID, "<!DOCTYPE DemoPayment>" + DEMO_XML))
+
+
 def test_external_entities_are_never_expanded(schema_dir: Path, tmp_path: Path) -> None:
     secret_file = tmp_path / "secret.txt"
     secret_file.write_text("TOP-SECRET-VALUE", encoding="utf-8")
@@ -89,9 +88,9 @@ def test_external_entities_are_never_expanded(schema_dir: Path, tmp_path: Path) 
     result = validate_message(DEMO_MESSAGE_ID, xml)
 
     assert "TOP-SECRET-VALUE" not in json.dumps(result)
+    _assert_dtd_rejected(result)
 
 
-@ENTITY_BUG
 def test_entity_expansion_bomb_is_not_expanded(schema_dir: Path) -> None:
     xml = (
         '<!DOCTYPE DemoPayment [<!ENTITY a "AAAAAAAAAA">'
@@ -102,6 +101,7 @@ def test_entity_expansion_bomb_is_not_expanded(schema_dir: Path) -> None:
     result = validate_message(DEMO_MESSAGE_ID, xml)
 
     assert "A" * 100 not in json.dumps(result)
+    _assert_dtd_rejected(result)
 
 
 def test_oversized_input_is_rejected_before_parsing(schema_dir: Path) -> None:

@@ -39,6 +39,15 @@ def test_validate_invalid_xml_is_still_http_200(schema_dir: Path) -> None:
     assert response.json()["valid"] is False
 
 
+def test_validate_xml_with_entities_is_http_200_not_500(schema_dir: Path) -> None:
+    xml = '<!DOCTYPE D [<!ENTITY a "A">]><DemoPayment><MessageId>&a;</MessageId><Amount>1</Amount><Currency>EUR</Currency></DemoPayment>'
+
+    response = client.post("/api/v1/validate", json={"message_id": DEMO_MESSAGE_ID, "xml": xml})
+
+    assert response.status_code == 200
+    assert response.json()["kind"] == "unsupported_xml"
+
+
 def test_validate_unregistered_schema_returns_409(schema_dir: Path) -> None:
     response = client.post("/api/v1/validate", json={"message_id": "pacs.008.001.08", "xml": "<Document/>"})
 
