@@ -8,10 +8,11 @@ from typing import Any
 
 from dotenv import load_dotenv
 
+from app.paths import SCHEMA_DIR as DEFAULT_SCHEMA_DIR
+
 load_dotenv()
 
-ROOT = Path(__file__).resolve().parents[2]
-SCHEMA_DIR = Path(os.getenv("PAYDOC_SCHEMA_DIR", ROOT / "data" / "schemas")).resolve()
+SCHEMA_DIR = Path(os.getenv("PAYDOC_SCHEMA_DIR", DEFAULT_SCHEMA_DIR)).resolve()
 SCHEMA_MANIFEST = SCHEMA_DIR / "registry.json"
 MESSAGE_ID_PATTERN = re.compile(r"^[a-z0-9]{4}\.\d{3}\.\d{3}\.\d{2,3}$")
 

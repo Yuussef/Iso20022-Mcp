@@ -1,15 +1,31 @@
 [project]
-name = "paydoc-ai"
-version = "0.1.0"
-description = "Local-first ISO 20022 validation and documentation workbench"
+name = "iso20022-mcp"
+version = "0.2.0"
+description = "ISO 20022 payment checks for people and AI agents: SEPA Credit Transfer, CBPR+ pacs.008, postal addresses, IBAN/BIC and MT103 to pacs.008, as an MCP server, a CLI and a web workbench"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
+keywords = ["iso20022", "mcp", "sepa", "swift", "cbpr", "pacs.008", "pain.001", "mt103", "iban", "payments"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial",
+    "Intended Audience :: Developers",
+]
 dependencies = [
     "fastapi[standard]>=0.142.2",
     "lxml>=5.0.0",
+    "mcp>=2,<3",
     "python-dotenv>=1.0.1",
 ]
+
+[project.urls]
+Repository = "https://github.com/Yuussef/Iso20022-Mcp"
+
+[project.scripts]
+iso20022-mcp = "app.mcp_server.server:main"
+iso20022-check = "app.cli:main"
 
 [project.optional-dependencies]
 ai = [
@@ -21,6 +37,26 @@ dev = [
     "pytest>=8",
     "ruff>=0.6",
 ]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+# The bundled reference data, knowledge notes and synthetic demo schema ship inside the
+# package as app/data so an installed copy (uvx, pip) finds them; see app/paths.py.
+[tool.hatch.build.targets.wheel.force-include]
+"data/reference" = "app/data/reference"
+"data/knowledge/sources.json" = "app/data/knowledge/sources.json"
+"data/knowledge/catalogue-overview.md" = "app/data/knowledge/catalogue-overview.md"
+"data/knowledge/cbpr-postal-address.md" = "app/data/knowledge/cbpr-postal-address.md"
+"data/knowledge/sepa-credit-transfer.md" = "app/data/knowledge/sepa-credit-transfer.md"
+"data/knowledge/cbpr-pacs008.md" = "app/data/knowledge/cbpr-pacs008.md"
+"data/knowledge/mt103-to-pacs008.md" = "app/data/knowledge/mt103-to-pacs008.md"
+"data/schemas/registry.json" = "app/data/schemas/registry.json"
+"data/schemas/demo-payment.xsd" = "app/data/schemas/demo-payment.xsd"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

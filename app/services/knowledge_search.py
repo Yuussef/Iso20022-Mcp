@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import json
 import re
-from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-ROOT = Path(__file__).resolve().parents[2]
-KNOWLEDGE_DIR = ROOT / "data" / "knowledge"
+from app.paths import KNOWLEDGE_DIR
+
 SOURCE_MANIFEST = KNOWLEDGE_DIR / "sources.json"
 STOP_WORDS = {
     "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "how",

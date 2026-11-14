@@ -21,7 +21,7 @@ from app.services.validation import (
     validate_message as validate_xml_message,
 )
 
-mcp = MCPServer(name="PayDoc AI ISO 20022", version="0.1.0")
+mcp = MCPServer(name="ISO 20022 payments (PayDoc AI)", version="0.2.0")
 
 
 @mcp.tool()
@@ -164,5 +164,10 @@ def explain_validation_error(message_id: str, error_code: str) -> dict[str, Any]
     return search_documents(f"{message_id} {error_code}"[:300], message_id, 5)
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Entry point of the `iso20022-mcp` command: serve the tools over stdio for an MCP host."""
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()
