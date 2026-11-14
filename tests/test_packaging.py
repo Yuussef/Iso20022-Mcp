@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tomllib
 import zipfile
@@ -70,3 +71,12 @@ def test_skill_builder_refuses_secrets_and_missing_front_matter(tmp_path: Path) 
     assert any(".env" in problem for problem in problems)
     with pytest.raises(SystemExit):
         build_skill_zip.build(skill, tmp_path / "out.zip")
+
+
+def test_install_commands_are_pinned_to_the_package_version() -> None:
+    version = pyproject()["project"]["version"]
+    for path in (ROOT / "README.md", ROOT / "skills" / "iso20022-payment-reviewer" / "SKILL.md"):
+        content = path.read_text(encoding="utf-8")
+        pins = re.findall(r"git\+https://github\.com/Yuussef/Iso20022-Mcp(@v[\w.]+)?", content)
+        assert pins, f"{path.name} has no install command"
+        assert set(pins) == {f"@v{version}"}, f"{path.name} pins {set(pins)}, expected @v{version}"

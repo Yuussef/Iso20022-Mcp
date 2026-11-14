@@ -156,7 +156,9 @@ select:disabled { opacity: 0.65; }
 .submit-button { width: 100%; margin-top: 15px; }
 .form-footnote { margin: 9px 0 0; color: #75839a; text-align: center; font-size: 8px; line-height: 1.6; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
-.result-column { display: grid; gap: 11px; }
+.result-column { display: grid; gap: 11px; min-width: 0; }
+/* Grid items default to min-width: auto, so long unwrapped content (the draft XML) would widen the page. */
+.result-column > * { min-width: 0; }
 .result-card { min-height: 280px; padding: 16px; }
 .result-empty { align-items: center; justify-content: center; min-height: 210px; text-align: center; }
 .result-symbol { width: 35px; height: 35px; display: grid; place-items: center; margin-bottom: 10px; border: 1px solid #a38bf333; border-radius: 11px; color: #b7a6ff; background: #a38bf312; font-size: 15px; }
@@ -297,3 +299,8 @@ select:disabled { opacity: 0.65; }
 .mapping-truncated strong, .mapping-missing strong, .mapping-unmapped strong { color: #ef9b80; }
 .xml-card { padding: 16px; }
 .xml-output { max-height: 360px; overflow: auto; margin: 10px 0 0; padding: 10px; border: 1px solid #2c3b52; border-radius: 5px; background: #0b1421; color: #a9c4df; font: 9px/1.6 "DM Mono", monospace; white-space: pre; }
+
+/* Overview: workflow rows are buttons that open each check */
+.workflow-link { width: 100%; border: 0; border-top: 1px solid #8091ab17; background: transparent; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.workflow-link:hover strong { color: #c9bcff; }
+.workflow-link:hover .workflow-state { color: #baaafa; }

@@ -10,10 +10,10 @@
 
 ## Try it in 60 seconds
 
-You need [uv](https://docs.astral.sh/uv/). The first run downloads the package; the checks then run offline.
+You need [uv](https://docs.astral.sh/uv/). The first run downloads the package; the checks then run offline. The commands are pinned to the `v0.2.0` release; remove `@v0.2.0` to follow `main`.
 
 ```bash
-uvx --from git+https://github.com/Yuussef/Iso20022-Mcp iso20022-check --iban "DE89 3704 0044 0532 0130 00"
+uvx --from git+https://github.com/Yuussef/Iso20022-Mcp@v0.2.0 iso20022-check --iban "DE89 3704 0044 0532 0130 00"
 ```
 
 From a clone, run the bundled samples:
@@ -33,7 +33,7 @@ The MCP server exposes these tools over stdio: `check_sepa_sct`, `check_cbpr_pac
 Claude Code:
 
 ```bash
-claude mcp add iso20022 -- uvx --from git+https://github.com/Yuussef/Iso20022-Mcp iso20022-mcp
+claude mcp add iso20022 -- uvx --from git+https://github.com/Yuussef/Iso20022-Mcp@v0.2.0 iso20022-mcp
 ```
 
 Claude Desktop (`claude_desktop_config.json`):
@@ -43,7 +43,7 @@ Claude Desktop (`claude_desktop_config.json`):
   "mcpServers": {
     "iso20022": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/Yuussef/Iso20022-Mcp", "iso20022-mcp"]
+      "args": ["--from", "git+https://github.com/Yuussef/Iso20022-Mcp@v0.2.0", "iso20022-mcp"]
     }
   }
 }
