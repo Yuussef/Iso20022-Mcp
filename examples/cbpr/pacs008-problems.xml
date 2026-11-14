@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic pacs.008 that breaks several CBPR+ rules. Not a real payment. -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <GrpHdr>
+      <MsgId>DEMO-CBPR-0002</MsgId>
+      <CreDtTm>2026-11-14T10:00:00+00:00</CreDtTm>
+      <NbOfTxs>2</NbOfTxs>
+      <SttlmInf><SttlmMtd>INDA</SttlmMtd></SttlmInf>
+    </GrpHdr>
+    <CdtTrfTxInf>
+      <PmtId>
+        <EndToEndId>PO-2026-7782</EndToEndId>
+        <UETR>3F2B8C4E-9A1D-1E7B-8C2F-5D6A7B8C9D0E</UETR>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="JPY">1500000.50</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-11-16</IntrBkSttlmDt>
+      <InstdAmt Ccy="JPY">1500100</InstdAmt>
+      <ChrgBr>SHAR</ChrgBr>
+      <Dbtr>
+        <Nm>Société Démo SARL</Nm>
+        <PstlAdr><AdrLine>12 Rue de la Demo</AdrLine><AdrLine>75001 Paris</AdrLine></PstlAdr>
+      </Dbtr>
+      <DbtrAcct><Id><IBAN>FR1420041010050500013M02607</IBAN></Id></DbtrAcct>
+      <DbtrAgt><FinInstnId><BICFI>DEMOFRPPXXX</BICFI></FinInstnId></DbtrAgt>
+      <CdtrAgt><FinInstnId><BICFI>DEMOJPJT</BICFI></FinInstnId></CdtrAgt>
+      <Cdtr>
+        <Nm>Sample KK</Nm>
+        <PstlAdr><TwnNm>100-0005 Tokyo</TwnNm><Ctry>JP</Ctry></PstlAdr>
+      </Cdtr>
+      <CdtrAcct><Id><Othr><Id>9876543210</Id></Othr></Id></CdtrAcct>
+    </CdtTrfTxInf>
+    <CdtTrfTxInf>
+      <PmtId>
+        <EndToEndId>PO-2026-7783</EndToEndId>
+      </PmtId>
+      <IntrBkSttlmAmt Ccy="EUR">100.00</IntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-11-16</IntrBkSttlmDt>
+      <ChrgBr>SLEV</ChrgBr>
+      <Dbtr><Nm>Atelier Demo SARL</Nm></Dbtr>
+      <DbtrAgt><FinInstnId><BICFI>DEMOFRPPXXX</BICFI></FinInstnId></DbtrAgt>
+      <CdtrAgt><FinInstnId><BICFI>DEMODEFFXXX</BICFI></FinInstnId></CdtrAgt>
+      <Cdtr><Nm>Beispiel GmbH</Nm></Cdtr>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

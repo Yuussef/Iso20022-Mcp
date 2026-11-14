@@ -9,8 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from app.services.cbpr_pacs008 import check_cbpr_pacs008
 from app.services.identifiers import validate_bic, validate_iban
 from app.services.knowledge_search import search_documents
+from app.services.payment_summary import summarize_payment
 from app.services.postal_address import check_postal_addresses
 from app.services.registry import SchemaUnavailableError, supported_messages
 from app.services.sepa_sct import check_sepa_sct
@@ -58,6 +60,10 @@ class SepaCheckRequest(BaseModel):
         default=False,
         description="Treat unstructured addresses as errors. Off by default because the EPC deferred their end date.",
     )
+
+
+class XmlRequest(BaseModel):
+    xml: str = Field(min_length=1, max_length=MAX_XML_CHARS)
 
 
 class IdentifierRequest(BaseModel):
@@ -118,6 +124,22 @@ def check_sepa_credit_transfer(payload: SepaCheckRequest) -> dict[str, Any]:
         return check_sepa_sct(payload.xml, payload.enforce_unstructured_address_removal)
     except ValidatorUnavailableError as exc:
         raise HTTPException(status_code=503, detail="Install the lxml dependency to check XML.") from exc
+
+
+@app.post("/api/v1/checks/cbpr-pacs008")
+def check_cbpr_customer_credit_transfer(payload: PostalAddressCheckRequest) -> dict[str, Any]:
+    try:
+        return check_cbpr_pacs008(payload.xml, payload.enforce_unstructured_removal)
+    except ValidatorUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Install the lxml dependency to check XML.") from exc
+
+
+@app.post("/api/v1/summaries/payment")
+def summarize_credit_transfer(payload: XmlRequest) -> dict[str, Any]:
+    try:
+        return summarize_payment(payload.xml)
+    except ValidatorUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Install the lxml dependency to read XML.") from exc
 
 
 @app.post("/api/v1/identifiers/iban")

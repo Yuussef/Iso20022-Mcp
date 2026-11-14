@@ -6,3 +6,6 @@
 {"id": "search-sepa-001", "kind": "retrieval", "query": "Which charge bearer code and currency does a SEPA credit transfer allow?", "expected_source_ids": ["sepa-credit-transfer"], "review_status": "starter-case"}
 {"id": "search-sepa-002", "kind": "retrieval", "query": "When is the payer address mandatory in SEPA for a Swiss or UK bank?", "expected_source_ids": ["sepa-credit-transfer"], "review_status": "starter-case"}
 {"id": "search-sepa-003", "kind": "retrieval", "query": "Which countries are part of SEPA?", "expected_source_ids": ["sepa-credit-transfer"], "review_status": "starter-case"}
+{"id": "search-cbpr-001", "kind": "retrieval", "query": "What format must the UETR have in a CBPR+ pacs.008?", "expected_source_ids": ["cbpr-pacs008"], "review_status": "starter-case"}
+{"id": "search-cbpr-002", "kind": "retrieval", "query": "When is charges information mandatory for CRED or SHAR?", "expected_source_ids": ["cbpr-pacs008"], "review_status": "starter-case"}
+{"id": "search-cbpr-003", "kind": "retrieval", "query": "How many decimals for a JPY amount?", "message_id": "pacs.008.001.08", "expected_source_ids": ["cbpr-pacs008"], "review_status": "starter-case"}

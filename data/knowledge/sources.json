@@ -19,5 +19,12 @@
     "message_id": null,
     "url": "https://www.europeanpaymentscouncil.eu/what-we-do/epc-payment-schemes/sepa-credit-transfer-sct/sepa-credit-transfer-rulebook-and",
     "file": "sepa-credit-transfer.md"
+  },
+  {
+    "id": "cbpr-pacs008",
+    "title": "CBPR+ pacs.008 usage rules beyond the XSD",
+    "message_id": "pacs.008.001.08",
+    "url": "https://developer.gs.com/docs/services/transaction-banking/cbpr+-pacs008/",
+    "file": "cbpr-pacs008.md"
   }
 ]
