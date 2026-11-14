@@ -24,6 +24,7 @@ async def test_server_exposes_the_four_tools() -> None:
         "validate_message",
         "search_iso_documents",
         "explain_validation_error",
+        "check_cbpr_postal_addresses",
     }
 
 
@@ -50,3 +51,22 @@ async def test_search_tool_clamps_limit() -> None:
     results = result.structured_content["results"]
     assert 1 <= len(results) <= 10
     assert results[0]["source_id"] == "iso20022-catalogue-overview"
+
+
+async def test_postal_address_tool_reports_findings() -> None:
+    xml = (Path(__file__).resolve().parents[1] / "examples" / "postal-address" / "problems.xml").read_text(encoding="utf-8")
+
+    async with Client(paydoc_mcp) as client:
+        result = await client.call_tool("check_cbpr_postal_addresses", {"xml": xml, "enforce_unstructured_removal": True})
+
+    content = result.structured_content
+    assert content["compliant"] is False
+    assert content["unstructured_removal"]["status"] == "deferred"
+    assert {address["role"] for address in content["addresses"]} == {"Dbtr", "CdtrAgt", "Cdtr", "UltmtCdtr"}
+
+
+async def test_postal_address_tool_rejects_oversized_input() -> None:
+    async with Client(paydoc_mcp) as client:
+        result = await client.call_tool("check_cbpr_postal_addresses", {"xml": "x" * 1_000_001})
+
+    assert result.structured_content["kind"] == "invalid_input"

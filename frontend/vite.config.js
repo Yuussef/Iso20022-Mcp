@@ -5,6 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: "127.0.0.1",
+    // Postal address samples are imported from ../examples so tests and UI share one copy.
+    fs: { allow: [".."] },
     proxy: {
       "/api": "http://127.0.0.1:8000",
     },

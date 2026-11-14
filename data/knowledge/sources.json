@@ -5,5 +5,12 @@
     "message_id": null,
     "url": "https://www.iso20022.org/iso-20022-message-definitions",
     "file": "catalogue-overview.md"
+  },
+  {
+    "id": "cbpr-postal-address",
+    "title": "CBPR+ postal address: structured, hybrid and unstructured",
+    "message_id": null,
+    "url": "https://www.swift.com/standards/iso-20022/iso-20022-faqs/iso-20022-removal-unstructured-address",
+    "file": "cbpr-postal-address.md"
   }
 ]

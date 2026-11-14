@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from app.services.knowledge_search import search_documents
+from app.services.postal_address import check_postal_addresses
 from app.services.registry import SchemaUnavailableError, supported_messages
 from app.services.validation import (
     MAX_XML_CHARS,
@@ -22,7 +23,7 @@ from app.services.validation import (
 
 app = FastAPI(
     title="PayDoc AI API",
-    description="Deterministic ISO 20022 schema validation and source-backed lookup.",
+    description="Deterministic ISO 20022 schema validation, CBPR+ postal address checks and source-backed lookup.",
     version="0.1.0",
 )
 app.add_middleware(
@@ -36,6 +37,14 @@ app.add_middleware(
 class ValidationRequest(BaseModel):
     message_id: str = Field(pattern=r"^[a-z0-9]{4}\.\d{3}\.\d{3}\.\d{2,3}$")
     xml: str = Field(min_length=1, max_length=MAX_XML_CHARS)
+
+
+class PostalAddressCheckRequest(BaseModel):
+    xml: str = Field(min_length=1, max_length=MAX_XML_CHARS)
+    enforce_unstructured_removal: bool = Field(
+        default=False,
+        description="Treat unstructured addresses as errors. Off by default because Swift deferred their removal.",
+    )
 
 
 class SearchRequest(BaseModel):
@@ -76,6 +85,14 @@ def validate(payload: ValidationRequest) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail="The configured local XSD could not be loaded.") from exc
     except ValueError as exc:
         raise HTTPException(status_code=413, detail=str(exc)) from exc
+
+
+@app.post("/api/v1/checks/postal-address")
+def check_postal_address(payload: PostalAddressCheckRequest) -> dict[str, Any]:
+    try:
+        return check_postal_addresses(payload.xml, payload.enforce_unstructured_removal)
+    except ValidatorUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Install the lxml dependency to check XML.") from exc
 
 
 @app.post("/api/v1/search")

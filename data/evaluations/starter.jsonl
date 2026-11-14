@@ -1,3 +1,5 @@
 {"id":"search-version-001","kind":"retrieval","query":"How do I select a message version and schema?","expected_source_ids":["iso20022-catalogue-overview"],"review_status":"starter-case"}
 {"id":"search-rules-001","kind":"retrieval","query":"Does XSD validation prove compliance with bank usage rules?","expected_source_ids":["iso20022-catalogue-overview"],"review_status":"starter-case"}
 {"id":"validation-unconfigured-001","kind":"validation-configuration","message_id":"pacs.008.001.08","fixture":"examples/validate-request.json","expected_http_status":409,"expected_kind":"schema_unavailable","note":"Expected only while no matching local XSD is installed."}
+{"id": "search-address-001", "kind": "retrieval", "query": "When are unstructured postal addresses removed and what is a hybrid address?", "expected_source_ids": ["cbpr-postal-address"], "review_status": "starter-case"}
+{"id": "search-address-002", "kind": "retrieval", "query": "Is a postal address needed for an agent identified by BIC?", "expected_source_ids": ["cbpr-postal-address"], "review_status": "starter-case"}

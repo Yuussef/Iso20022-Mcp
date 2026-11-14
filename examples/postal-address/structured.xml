@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic pacs.008 fragment for the CBPR+ postal address check. Not a complete or real payment. -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+  <FIToFICstmrCdtTrf>
+    <CdtTrfTxInf>
+      <Dbtr>
+        <Nm>Atelier Demo SARL</Nm>
+        <PstlAdr>
+          <StrtNm>Rue de la Demo</StrtNm>
+          <BldgNb>12</BldgNb>
+          <PstCd>75001</PstCd>
+          <TwnNm>Paris</TwnNm>
+          <Ctry>FR</Ctry>
+        </PstlAdr>
+      </Dbtr>
+      <DbtrAgt><FinInstnId><BICFI>DEMOFRPPXXX</BICFI></FinInstnId></DbtrAgt>
+      <CdtrAgt><FinInstnId><BICFI>DEMODEFFXXX</BICFI></FinInstnId></CdtrAgt>
+      <Cdtr>
+        <Nm>Beispiel GmbH</Nm>
+        <PstlAdr>
+          <StrtNm>Musterstrasse</StrtNm>
+          <BldgNb>5</BldgNb>
+          <PstCd>60311</PstCd>
+          <TwnNm>Frankfurt am Main</TwnNm>
+          <Ctry>DE</Ctry>
+        </PstlAdr>
+      </Cdtr>
+    </CdtTrfTxInf>
+  </FIToFICstmrCdtTrf>
+</Document>

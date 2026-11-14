@@ -5,6 +5,7 @@ from typing import Any
 from mcp.server.mcpserver import MCPServer
 
 from app.services.knowledge_search import search_documents
+from app.services.postal_address import check_postal_addresses
 from app.services.registry import SchemaUnavailableError, supported_messages
 from app.services.validation import (
     SchemaConfigurationError,
@@ -42,6 +43,23 @@ def validate_message(message_id: str, xml: str) -> dict[str, Any]:
         return {"message_id": message_id, "valid": False, "kind": "schema_configuration_error", "errors": []}
     except ValueError as exc:
         return {"message_id": message_id, "valid": False, "kind": "invalid_input", "errors": [], "detail": str(exc)}
+
+
+@mcp.tool()
+def check_cbpr_postal_addresses(xml: str, enforce_unstructured_removal: bool = False) -> dict[str, Any]:
+    """Check every postal address (PstlAdr) in an ISO 20022 payment message against the CBPR+ rules.
+
+    Reports each address as structured, hybrid or unstructured, with rule IDs, severities,
+    XPaths and fix suggestions. Needs no XSD. Unstructured addresses are warnings unless
+    enforce_unstructured_removal is true, because Swift deferred their removal (announced
+    27 August 2026). Report findings exactly as returned; do not add rules.
+    """
+    try:
+        return check_postal_addresses(xml, enforce_unstructured_removal)
+    except ValidatorUnavailableError:
+        return {"kind": "validator_unavailable", "compliant": False, "addresses": [], "errors": []}
+    except ValueError as exc:
+        return {"kind": "invalid_input", "compliant": False, "addresses": [], "errors": [], "detail": str(exc)}
 
 
 @mcp.tool()

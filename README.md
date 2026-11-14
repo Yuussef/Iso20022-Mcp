@@ -4,7 +4,7 @@
 
 *PayDoc AI is the product name; the repository is [Iso20022-Mcp](https://github.com/Yuussef/Iso20022-Mcp).*
 
-**A local-first ISO 20022 developer workbench built with FastAPI and React.** It validates XML against an explicitly selected local XSD, searches a small local reference corpus, and exposes the same operations as MCP tools. An optional AWS Bedrock client can call those MCP tools before answering.
+**A local-first ISO 20022 developer workbench built with FastAPI and React.** It validates XML against an explicitly selected local XSD, checks postal addresses against the CBPR+ usage rules that an XSD cannot enforce, searches a small local reference corpus, and exposes the same operations as MCP tools. An optional AWS Bedrock client can call those MCP tools before answering.
 
 > This is a portfolio project, not a payment processor, compliance product, or banking system. Use synthetic XML only.
 
@@ -14,11 +14,12 @@
 | --- | --- |
 | FastAPI health and schema-registry endpoints | Implemented |
 | Secure XML parsing and local XSD validation | Implemented; includes a synthetic demo XSD, not an official ISO 20022 schema |
-| Local source manifest and keyword search with provenance links | Implemented; starter corpus contains one original project note |
-| React dashboard, validator form, XML file upload, search UI | Implemented |
+| CBPR+ postal address check (structured / hybrid / unstructured) | Implemented; needs no XSD; synthetic pacs.008 samples included |
+| Local source manifest and keyword search with provenance links | Implemented; starter corpus contains two original project notes |
+| React dashboard, validator form, address check, XML file upload, search UI | Implemented |
 | MCP server exposing shared domain operations over stdio | Implemented; install the optional `ai` dependencies |
 | Bedrock Converse client invoking MCP tools and returning sources | Implemented; requires AWS credentials and a configured model with tool use |
-| Starter evaluation cases | Included in `data/evaluations/starter.jsonl`; runner and measured metrics are next |
+| Starter evaluation cases | `data/evaluations/starter.jsonl` runs in the test suite; measured metrics are next |
 
 The registry includes one synthetic demo schema so you can exercise the validator; it is not an official ISO 20022 schema. No official ISO message version is bundled. Add an approved XSD and register its exact message ID before validating real ISO message structures. The app never downloads a schema or guesses a version. The starter search is lexical keyword matching, not embeddings or semantic RAG. The optional AI path is disabled until configured and needs the `ai` dependency extra.
 
@@ -30,13 +31,41 @@ Payment developers need to inspect message structure, understand validation erro
 
 - **Version-explicit validation:** choose a registered message ID such as `pacs.008.001.08`; the server validates against its local XSD.
 - **Structured diagnostics:** return schema/parser error code, message, line, column, and XPath when available.
-- **Safe XML parsing:** disable network access, entity resolution, and DTD loading; cap XML input length.
+- **CBPR+ postal address check:** classify every `PstlAdr` as structured, hybrid or unstructured and report rule violations with severity, XPath and a suggested fix (see [below](#cbpr-postal-address-check)).
+- **Safe XML parsing:** disable network access, entity resolution, and DTD loading; reject any DOCTYPE; cap XML input length.
 - **Source-backed lookup:** search local Markdown references and return a source ID, excerpt, and provenance link.
-- **MCP tools:** list versions, validate a message, search local documents, and look up evidence related to an error.
+- **MCP tools:** list versions, validate a message, check postal addresses, search local documents, and look up evidence related to an error.
 - **Optional AI assistant:** Bedrock receives tool definitions through the MCP SDK and surfaces returned sources; it does not decide whether XML passes the XSD.
 - **React + FastAPI:** a responsive dashboard, validator, knowledge search, and assistant call the real API.
 
 XSD validation only checks the constraints represented by the chosen schema. It does not prove compliance with scheme-specific, community, or bank usage guidelines. ISO 20022 itself notes that implementation requirements depend on the community using a message. See the [official FAQ](https://www.iso20022.org/faq).
+
+## CBPR+ postal address check
+
+The ISO 20022 XSD accepts addresses that CBPR+ rejects. `POST /api/v1/checks/postal-address` (and the MCP tool `check_cbpr_postal_addresses`) inspects every `PstlAdr` in a message and needs no schema file.
+
+| Rule | Severity | What it catches |
+| --- | --- | --- |
+| `CBPR_ADDR_UNSTRUCTURED` | warning (error with `enforce_unstructured_removal`) | Address made only of `AdrLine` free text |
+| `CBPR_ADDR_TOWN_MISSING` / `CBPR_ADDR_COUNTRY_MISSING` | error | Structured or hybrid address without `TwnNm` or `Ctry` |
+| `CBPR_ADDR_TOO_MANY_LINES` | error | Hybrid address with more than two `AdrLine` |
+| `CBPR_ADDR_TOO_LONG` | error | Element longer than its CBPR+ limit (`TwnNm` 35, `PstCd` 16, `AdrLine` 70, …) |
+| `CBPR_ADDR_COUNTRY_FORMAT` | error | `Ctry` that is not a two-letter upper-case ISO 3166 code |
+| `CBPR_ADDR_POSTCODE_IN_TOWN` | warning | Post code mapped into `TwnNm` (for example `75001 Paris`) |
+| `CBPR_ADDR_DUPLICATED_IN_LINE` | warning | Hybrid `AdrLine` repeating the town already in `TwnNm` |
+| `CBPR_ADDR_AGENT_HAS_BIC` | info | Agent identified by BIC, where the BIC alone is a valid option |
+
+**Deadline status.** Swift planned to remove unstructured addresses from CBPR+ payment messages on 14 November 2026 (SR2026). On 27 August 2026 Swift [deferred all SR2026 payments changes](https://www.swift.com/insights/news/swift-accepts-community-request-extend-structured-address-migration-iso-20022-payment-messages), with new timing to be announced by December 2026. Unstructured addresses are therefore reported as warnings by default; set `enforce_unstructured_removal` to `true` to simulate the removal. Reporting and admin messages (camt.052/053/054/060, camt.025, admi.024) are out of scope, as in the [Swift FAQ](https://www.swift.com/standards/iso-20022/iso-20022-faqs/iso-20022-removal-unstructured-address).
+
+Rules come from the Swift FAQ and news above and from the CBPR+ pacs.008.001.08 usage guideline as published on the [Goldman Sachs developer portal](https://developer.gs.com/docs/services/transaction-banking/cbpr+-pacs008/). They cover postal addresses only, not the rest of the message. Check the current CBPR+ usage guidelines on Swift MyStandards before relying on them.
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/checks/postal-address \
+  -H "Content-Type: application/json" \
+  -d "$(jq -Rs '{xml: .}' examples/postal-address/problems.xml)"
+```
+
+Synthetic samples are in [`examples/postal-address/`](examples/postal-address): `structured.xml`, `hybrid.xml` and `problems.xml`.
 
 ## Architecture
 
@@ -45,6 +74,7 @@ React + Vite browser app
   ├── GET  /api/v1/health
   ├── GET  /api/v1/messages
   ├── POST /api/v1/validate ──> local, versioned XSD
+  ├── POST /api/v1/checks/postal-address ──> CBPR+ address rules (no XSD needed)
   ├── POST /api/v1/search   ──> local sources + provenance
   └── POST /api/v1/ask      ──> Bedrock Converse ──> MCP client ──> MCP tools
 
@@ -207,7 +237,7 @@ The MCP server test is skipped when the optional `ai` extra is not installed. `t
 
 ### Step 3 — Expose the services through MCP
 
-The server uses the [official MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk), is an optional `ai` dependency extra, and defaults to local stdio transport. The server and Bedrock client are implemented; Inspector verification and automated in-memory client evaluation remain to be added.
+The server uses the [official MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk), is an optional `ai` dependency extra, and defaults to local stdio transport. The server and Bedrock client are implemented, and the test suite exercises every tool through the in-memory MCP client; Inspector verification remains to be added.
 
 Initial tools:
 
@@ -215,6 +245,7 @@ Initial tools:
 | --- | --- | --- |
 | `list_supported_messages` | none | Registered message IDs/versions and local schema availability |
 | `validate_message` | `message_id`, `xml` | Deterministic validity and structured diagnostics |
+| `check_cbpr_postal_addresses` | `xml`, optional `enforce_unstructured_removal` | Per-address format and CBPR+ findings with XPath and suggested fix |
 | `search_iso_documents` | `query`, optional `message_id`, `limit` | Excerpts with source ID, version, section/page, and provenance |
 | `explain_validation_error` | `message_id`, error details | Matching source excerpts; no invented rule when no source matches |
 
