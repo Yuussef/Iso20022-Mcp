@@ -1,5 +1,9 @@
 # PayDoc AI
 
+[![CI](https://github.com/Yuussef/Iso20022-Mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Yuussef/Iso20022-Mcp/actions/workflows/ci.yml)
+
+*PayDoc AI is the product name; the repository is [Iso20022-Mcp](https://github.com/Yuussef/Iso20022-Mcp).*
+
 **A local-first ISO 20022 developer workbench built with FastAPI and React.** It validates XML against an explicitly selected local XSD, searches a small local reference corpus, and exposes the same operations as MCP tools. An optional AWS Bedrock client can call those MCP tools before answering.
 
 > This is a portfolio project, not a payment processor, compliance product, or banking system. Use synthetic XML only.
@@ -85,11 +89,11 @@ In a second terminal:
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite (normally `http://127.0.0.1:5173`). The Vite development server proxies `/api` to the FastAPI server on port 8000. `npm install` creates `frontend/package-lock.json`; commit that lockfile so installs are reproducible.
+Open the local URL printed by Vite (normally `http://127.0.0.1:5173`). The Vite development server proxies `/api` to the FastAPI server on port 8000. `frontend/package-lock.json` is committed; use `npm ci` instead of `npm install` for an exact, reproducible install.
 
 ### Windows PowerShell
 
@@ -97,7 +101,7 @@ The same commands work in PowerShell. If you need a local environment file, copy
 
 ## Deploy a free demo
 
-The project includes a Render Blueprint for a single FastAPI web service that also serves the built React app. To deploy it, open the [Render Blueprint creation page](https://dashboard.render.com/blueprint/new?repo=https://github.com/Yuussef/paydoc-ai-iso20022), connect the public GitHub repository, and create the Blueprint. Render builds the frontend and API from `render.yaml` and assigns an `onrender.com` URL.
+The project includes a Render Blueprint for a single FastAPI web service that also serves the built React app. To deploy it, open the [Render Blueprint creation page](https://dashboard.render.com/blueprint/new?repo=https://github.com/Yuussef/Iso20022-Mcp), connect the public GitHub repository, and create the Blueprint. Render builds the frontend and API from `render.yaml` and assigns an `onrender.com` URL.
 
 The free web service can spin down after 15 minutes without requests, so the first visit after inactivity may take a little longer. This is a portfolio demo: do not submit real payment messages, customer information, or confidential documents. No ISO XSD or AWS credentials are included; validation needs a schema you are permitted to use, and the AI assistant stays disabled until configured.
 
@@ -169,9 +173,19 @@ uv run --extra ai python -m app.mcp_server.server
 uv run --extra ai mcp dev app/mcp_server/server.py
 ```
 
-In PowerShell, use `curl.exe` (not the `curl` alias) and keep the request on one line. The MCP Inspector also needs Node.js and `npx` on `PATH`.
+In PowerShell, use `curl.exe` (not the `curl` alias) and keep each request on one line, for example: `curl.exe -X POST http://127.0.0.1:8000/api/v1/search -H "Content-Type: application/json" --data-binary "@examples/search-request.json"`. The MCP Inspector also needs Node.js and `npx` on `PATH`.
 
-In PowerShell, use `curl.exe` (not the `curl` alias) and keep each request on one line, for example: `curl.exe -X POST http://127.0.0.1:8000/api/v1/search -H "Content-Type: application/json" --data-binary "@examples/search-request.json"`.
+## Tests
+
+The test suite uses only the bundled synthetic schema and starter corpus; it needs no ISO files, AWS credentials, or network access.
+
+```bash
+uv sync --extra dev --extra ai
+uv run pytest
+uv run ruff check app tests
+```
+
+The MCP server test is skipped when the optional `ai` extra is not installed. `tests/test_evaluations.py` runs every case in `data/evaluations/starter.jsonl` as a regression test. CI runs the same checks on Python 3.11 and 3.12 and builds the frontend.
 
 ## Detailed roadmap: MCP + grounded LLM
 
@@ -250,14 +264,14 @@ Expected flow: call `validate_message` â†’ search for the relevant field/rule â†
 
 ## Publish to GitHub
 
-This project is published at [github.com/Yuussef/paydoc-ai-iso20022](https://github.com/Yuussef/paydoc-ai-iso20022). Clone it with:
+This project is published at [github.com/Yuussef/Iso20022-Mcp](https://github.com/Yuussef/Iso20022-Mcp). Clone it with:
 
 ```bash
-git clone https://github.com/Yuussef/paydoc-ai-iso20022.git
-cd paydoc-ai-iso20022
+git clone https://github.com/Yuussef/Iso20022-Mcp.git
+cd Iso20022-Mcp
 ```
 
-To publish later changes, commit them on `main` and run `git push`. Do not force-add local XSDs or `.env` files; `.gitignore` excludes them by default. The frontend does not yet include an npm lockfile; generate and commit `frontend/package-lock.json` after reviewing the dependency versions if reproducible npm installs are required.
+To publish later changes, commit them on `main` and run `git push`. Do not force-add local XSDs or `.env` files; `.gitignore` excludes them by default. `frontend/package-lock.json` is committed, so use `npm ci` for reproducible installs.
 
 ## References
 
@@ -269,4 +283,4 @@ To publish later changes, commit them on `main` and run `git push`. Do not force
 
 ## License and source-data note
 
-Choose a license for the original project code when ready. A project code license does not automatically grant redistribution rights to ISO schemas, message reports, or other third-party materials. Keep source files, provenance, and their terms clearly documented and separate from original code.
+The original project code is released under the [MIT License](LICENSE). This license does not automatically grant redistribution rights to ISO schemas, message reports, or other third-party materials. Keep source files, provenance, and their terms clearly documented and separate from original code.

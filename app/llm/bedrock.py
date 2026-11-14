@@ -47,10 +47,10 @@ async def answer_with_mcp_tools(question: str) -> dict[str, Any]:
     if not model_id:
         raise RuntimeError("BEDROCK_MODEL_ID is not configured")
     try:
+        import anyio
         import boto3
         from botocore.config import Config
         from botocore.exceptions import BotoCoreError, ClientError
-        import anyio
     except ImportError as exc:
         raise ImportError("Optional Bedrock and MCP dependencies are missing") from exc
 
