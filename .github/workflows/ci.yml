@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked --extra dev --extra ai
       - name: Lint
-        run: uv run ruff check app tests
+        run: uv run ruff check app tests scripts
       - name: Test
         run: uv run pytest -q -rs
 

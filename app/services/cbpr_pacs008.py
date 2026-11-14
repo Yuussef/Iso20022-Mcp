@@ -19,9 +19,9 @@ import json
 import re
 from decimal import Decimal, InvalidOperation
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
 
+from app.paths import REFERENCE_DIR
 from app.services.identifiers import validate_bic, validate_iban
 from app.services.postal_address import check_postal_addresses
 from app.services.xml_safety import UntrustedXmlError, parse_untrusted_xml
@@ -29,7 +29,6 @@ from app.services.xml_tools import child, children, descendant, find_all, findin
 
 RULEBOOK = "CBPR+ pacs.008.001.08 usage rules (UETR, single transaction, charges, currency decimals, character set, addresses)"
 EXPECTED_VERSION = "pacs.008.001.08"
-REFERENCE_DIR = Path(__file__).resolve().parents[2] / "data" / "reference"
 
 SOURCES = [
     "https://developer.gs.com/docs/services/transaction-banking/cbpr+-pacs008/",

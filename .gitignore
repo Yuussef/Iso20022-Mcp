@@ -25,3 +25,6 @@ data/knowledge/local/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Build output (wheel, sdist, Agensi skill zip)
+dist/

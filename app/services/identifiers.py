@@ -12,10 +12,10 @@ from __future__ import annotations
 import json
 import re
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
 
-REFERENCE_DIR = Path(__file__).resolve().parents[2] / "data" / "reference"
+from app.paths import REFERENCE_DIR
+
 MAX_IDENTIFIER_CHARS = 100
 
 BIC_PATTERN = re.compile(r"^([A-Z0-9]{4})([A-Z]{2})([A-Z0-9]{2})([A-Z0-9]{3})?$")

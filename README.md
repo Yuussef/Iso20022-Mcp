@@ -2,11 +2,64 @@
 
 [![CI](https://github.com/Yuussef/Iso20022-Mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Yuussef/Iso20022-Mcp/actions/workflows/ci.yml)
 
-*PayDoc AI is the product name; the repository is [Iso20022-Mcp](https://github.com/Yuussef/Iso20022-Mcp).*
+*PayDoc AI is the product name; the repository and Python package are `iso20022-mcp`.*
 
-**A local-first ISO 20022 developer workbench built with FastAPI and React.** It validates XML against an explicitly selected local XSD, checks SEPA Credit Transfers against the EPC rules and postal addresses against the CBPR+ rules that an XSD cannot enforce, validates IBANs and BICs offline, searches a small local reference corpus, and exposes the same operations as MCP tools. An optional AWS Bedrock client can call those MCP tools before answering.
+**ISO 20022 payment checks for people and AI agents.** It catches what the XSD lets through: SEPA Credit Transfer rules (EPC), CBPR+ pacs.008 rules (UETR, charges, currency decimals), structured, hybrid and unstructured postal addresses, IBAN and BIC validity, and what an MT103 loses on its way to pacs.008. Every check is deterministic, offline and sourced. The same operations are available as an **MCP server** for Claude and other agents, a **CLI**, an **agent skill**, and a **React + FastAPI workbench**.
 
 > This is a portfolio project, not a payment processor, compliance product, or banking system. Use synthetic XML only.
+
+## Try it in 60 seconds
+
+You need [uv](https://docs.astral.sh/uv/). The first run downloads the package; the checks then run offline.
+
+```bash
+uvx --from git+https://github.com/Yuussef/Iso20022-Mcp iso20022-check --iban "DE89 3704 0044 0532 0130 00"
+```
+
+From a clone, run the bundled samples:
+
+```bash
+uv run iso20022-check examples/sepa/pacs008-problems.xml --profile sepa
+uv run iso20022-check examples/cbpr/pacs008-valid.xml --summary
+uv run iso20022-check --mt103 examples/mt103/legacy-free-text.txt
+```
+
+`PASS` or `FAIL` comes first, then each finding with its rule ID, fix and XPath. The exit code is 0 when there are no rule errors, 1 when there are, and 2 when the input is unreadable. Add `--json` for the full result.
+
+## Use with Claude (MCP)
+
+The MCP server exposes these tools over stdio: `check_sepa_sct`, `check_cbpr_pacs008`, `check_cbpr_postal_addresses`, `convert_mt103_to_pacs008`, `summarize_payment`, `validate_iban`, `validate_bic`, `validate_message`, `search_iso_documents`, `list_supported_messages` and `explain_validation_error`.
+
+Claude Code:
+
+```bash
+claude mcp add iso20022 -- uvx --from git+https://github.com/Yuussef/Iso20022-Mcp iso20022-mcp
+```
+
+Claude Desktop (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "iso20022": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/Yuussef/Iso20022-Mcp", "iso20022-mcp"]
+    }
+  }
+}
+```
+
+Then ask, for example: *"Check this pacs.008 for CBPR+ and explain what to fix"*, or *"What does this MT103 lose when converted to pacs.008?"*.
+
+## Agent skill
+
+[`skills/iso20022-payment-reviewer/SKILL.md`](skills/iso20022-payment-reviewer/SKILL.md) teaches an agent when to run `iso20022-check`, how to present the findings, and which facts and limits to state, such as the deferred end date for unstructured addresses. Build the uploadable zip with:
+
+```bash
+uv run python scripts/build_skill_zip.py
+```
+
+The script refuses to build when the front matter is missing, a file is too large, or anything looks like a credential.
 
 ## Current status
 
