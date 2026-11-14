@@ -279,3 +279,14 @@ select:disabled { opacity: 0.65; }
 .identifier-invalid strong { color: #ef9b80; }
 .identifier-result small { color: #75839a; font-size: 9px; }
 @media (max-width: 520px) { .identifier-card .search-input-row { flex-wrap: wrap; } .identifier-card input { flex-basis: 100%; } }
+
+/* CBPR+ check: payment route */
+.route-card { padding: 16px; }
+.route-amount { margin: 8px 0 10px; color: #e5eaf3; font: 600 15px Manrope, sans-serif; }
+.route-amount span { color: #8997ae; font: 400 10px "DM Sans", sans-serif; }
+.route-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.route-list li { position: relative; display: grid; gap: 2px; padding: 7px 0 7px 18px; border-left: 1px solid #a58df455; margin-left: 5px; }
+.route-list li::before { content: ""; position: absolute; left: -4px; top: 12px; width: 7px; height: 7px; border-radius: 50%; background: #a58df4; }
+.route-list strong { color: #dfe6f1; font: 10px "DM Mono", monospace; }
+.route-list small, .route-meta { color: #75839a; font-size: 9px; overflow-wrap: anywhere; }
+.route-meta { display: block; margin-top: 8px; font-family: "DM Mono", monospace; }

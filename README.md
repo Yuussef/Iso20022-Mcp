@@ -16,8 +16,10 @@
 | Secure XML parsing and local XSD validation | Implemented; includes a synthetic demo XSD, not an official ISO 20022 schema |
 | SEPA Credit Transfer check (EPC 2025 rules, pacs.008 and pain.001) | Implemented; needs no XSD; synthetic samples included |
 | IBAN (ISO 13616 registry + mod-97) and BIC (ISO 9362) validation | Implemented; offline, format only |
-| CBPR+ postal address check (structured / hybrid / unstructured) | Implemented; needs no XSD; synthetic pacs.008 samples included |
-| Local source manifest and keyword search with provenance links | Implemented; starter corpus contains three original project notes |
+| CBPR+ pacs.008 check (UETR, single transaction, charges, ISO 4217 decimals, IBAN/BIC, characters) | Implemented; needs no XSD; synthetic samples included |
+| Payment summary (parties, amounts, bank chain, remittance) for pacs.008 and pain.001 | Implemented |
+| CBPR+ postal address check (structured / hybrid / unstructured) | Implemented; included in the CBPR+ check |
+| Local source manifest and keyword search with provenance links | Implemented; starter corpus contains four original project notes |
 | React dashboard, validator form, address check, XML file upload, search UI | Implemented |
 | MCP server exposing shared domain operations over stdio | Implemented; install the optional `ai` dependencies |
 | Bedrock Converse client invoking MCP tools and returning sources | Implemented; requires AWS credentials and a configured model with tool use |
@@ -33,12 +35,14 @@ Payment developers need to inspect message structure, understand validation erro
 
 - **Version-explicit validation:** choose a registered message ID such as `pacs.008.001.08`; the server validates against its local XSD.
 - **Structured diagnostics:** return schema/parser error code, message, line, column, and XPath when available.
+- **CBPR+ pacs.008 check:** UETR, one transaction per message, DEBT/CRED/SHAR and charges information, ISO 4217 decimals, IBAN/BIC validity, the CBPR+ character set and postal addresses (see [below](#cbpr-pacs008-check)).
+- **Payment summary:** who pays whom, how much, through which banks and why, for people and agents.
 - **SEPA Credit Transfer check:** apply the EPC 2025 SCT rules that an XSD cannot enforce, such as euro-only amounts, SLEV, IBAN-only accounts and the non-EEA debtor address rule (see [below](#sepa-credit-transfer-check)).
 - **IBAN and BIC validation:** national length and structure from the Swift IBAN Registry, mod-97 check digits, ISO 9362 BIC format, test BICs and SEPA membership. Offline, so it proves the format, not that the account exists.
 - **CBPR+ postal address check:** classify every `PstlAdr` as structured, hybrid or unstructured and report rule violations with severity, XPath and a suggested fix (see [below](#cbpr-postal-address-check)).
 - **Safe XML parsing:** disable network access, entity resolution, and DTD loading; reject any DOCTYPE; cap XML input length.
 - **Source-backed lookup:** search local Markdown references and return a source ID, excerpt, and provenance link.
-- **MCP tools:** list versions, validate a message, check SEPA credit transfers and postal addresses, validate IBANs and BICs, search local documents, and look up evidence related to an error.
+- **MCP tools:** list versions, validate a message, check SEPA credit transfers, CBPR+ pacs.008 and postal addresses, summarise a payment, validate IBANs and BICs, search local documents, and look up evidence related to an error.
 - **Optional AI assistant:** Bedrock receives tool definitions through the MCP SDK and surfaces returned sources; it does not decide whether XML passes the XSD.
 - **React + FastAPI:** a responsive dashboard, validator, knowledge search, and assistant call the real API.
 
@@ -67,6 +71,23 @@ XSD validation only checks the constraints represented by the chosen schema. It 
 Sources: the [EPC SCT rulebook and implementation guidelines](https://www.europeanpaymentscouncil.eu/what-we-do/epc-payment-schemes/sepa-credit-transfer-sct/sepa-credit-transfer-rulebook-and) (EPC115-06 and EPC132-08, 2025 v1.0), [EPC409-09 v8.0](https://www.europeanpaymentscouncil.eu/document-library/other/epc-list-sepa-scheme-countries) for SEPA countries, and the [Swift IBAN Registry](https://www.swift.com/standards/data-standards/iban-international-bank-account-number) in [`data/reference/`](data/reference). The check covers EPC usage rules only; a bank or clearing house may add its own.
 
 `POST /api/v1/identifiers/iban` and `/identifiers/bic` (MCP tools `validate_iban`, `validate_bic`) validate a single identifier. Synthetic samples are in [`examples/sepa/`](examples/sepa).
+
+## CBPR+ pacs.008 check
+
+`POST /api/v1/checks/cbpr-pacs008` (MCP tool `check_cbpr_pacs008`) checks a cross-border pacs.008 against CBPR+ usage rules and includes the postal address check below. `POST /api/v1/summaries/payment` (MCP tool `summarize_payment`) restates a pacs.008 or pain.001 as parties, amounts, dates, charges, the chain of banks and the remittance information.
+
+| Rule | Severity | What it catches |
+| --- | --- | --- |
+| `CBPR_SINGLE_TRANSACTION` | error | `NbOfTxs` other than 1, or more than one transaction |
+| `CBPR_UETR_MISSING`, `CBPR_UETR_FORMAT` | error | No UETR, or not a lower-case UUID version 4 |
+| `CBPR_CHARGE_BEARER` | error | Missing, or not DEBT, CRED or SHAR (SLEV is SEPA-only) |
+| `CBPR_CHARGES_INFO_REQUIRED` | error | No charges information with CRED, with SHAR after a deduction, or with DEBT and prepaid charges |
+| `CBPR_CURRENCY_DECIMALS`, `CBPR_CURRENCY_UNKNOWN` | error | More decimals than ISO 4217 allows (e.g. JPY 1500.5), or an unknown currency |
+| `CBPR_IBAN_*`, `CBPR_BIC_*` | error | Invalid IBAN or BIC anywhere in the transaction |
+| `CBPR_CHARACTER_SET` | warning | Text outside the CBPR+ character set |
+| `CBPR_ADDR_*` | error / warning | Postal address rules (next section) |
+
+Sources: the CBPR+ pacs.008.001.08 guideline as published on the [Goldman Sachs developer portal](https://developer.gs.com/docs/services/transaction-banking/cbpr+-pacs008/), the [Clearstream CBPR+ user guide](https://www.clearstream.com/caas/v1/media/4814538/data/ca917a93e9390d399c6c34ebe14032d0/cbpr-ug.pdf) (UETR mandatory in pacs.008), and ISO 4217 List One from [SIX](https://www.six-group.com/en/products-services/financial-information/market-reference-data/data-standards.html) in [`data/reference/iso4217.json`](data/reference/iso4217.json). Bank-specific rules are not applied. Samples are in [`examples/cbpr/`](examples/cbpr).
 
 ## CBPR+ postal address check
 
@@ -103,6 +124,8 @@ React + Vite browser app
   ├── GET  /api/v1/messages
   ├── POST /api/v1/validate ──> local, versioned XSD
   ├── POST /api/v1/checks/sepa-sct ──> EPC SEPA Credit Transfer rules (no XSD needed)
+  ├── POST /api/v1/checks/cbpr-pacs008 ──> CBPR+ rules + addresses (no XSD needed)
+  ├── POST /api/v1/summaries/payment ──> parties, amounts, bank chain
   ├── POST /api/v1/checks/postal-address ──> CBPR+ address rules (no XSD needed)
   ├── POST /api/v1/identifiers/{iban,bic} ──> IBAN Registry + mod-97, ISO 9362
   ├── POST /api/v1/search   ──> local sources + provenance
@@ -278,6 +301,8 @@ Initial tools:
 | `check_cbpr_postal_addresses` | `xml`, optional `enforce_unstructured_removal` | Per-address format and CBPR+ findings with XPath and suggested fix |
 | `check_sepa_sct` | `xml`, optional `enforce_unstructured_address_removal` | Per-transaction EPC SCT findings with XPath and suggested fix |
 | `validate_iban` / `validate_bic` | `iban` / `bic` | Format, structure, check digits, parts and SEPA membership |
+| `check_cbpr_pacs008` | `xml`, optional `enforce_unstructured_removal` | CBPR+ message, transaction and address findings |
+| `summarize_payment` | `xml` | Parties, amounts, dates, charges, bank chain and remittance for pacs.008 or pain.001 |
 | `search_iso_documents` | `query`, optional `message_id`, `limit` | Excerpts with source ID, version, section/page, and provenance |
 | `explain_validation_error` | `message_id`, error details | Matching source excerpts; no invented rule when no source matches |
 

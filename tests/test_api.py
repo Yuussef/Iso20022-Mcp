@@ -171,3 +171,28 @@ def test_identifier_endpoints(kind: str, value: str, valid: bool) -> None:
 @pytest.mark.parametrize("payload", [{"value": ""}, {}, {"value": "x" * 101}])
 def test_identifier_endpoints_reject_invalid_requests(payload: dict) -> None:
     assert client.post("/api/v1/identifiers/iban", json=payload).status_code == 422
+
+
+def _cbpr_sample(name: str) -> str:
+    return (Path(__file__).resolve().parents[1] / "examples" / "cbpr" / f"{name}.xml").read_text(encoding="utf-8")
+
+
+def test_cbpr_check_endpoint() -> None:
+    valid = client.post("/api/v1/checks/cbpr-pacs008", json={"xml": _cbpr_sample("pacs008-valid")}).json()
+    problems = client.post("/api/v1/checks/cbpr-pacs008", json={"xml": _cbpr_sample("pacs008-problems")}).json()
+
+    assert valid["compliant"] is True
+    assert problems["compliant"] is False
+    assert problems["postal_addresses"]["kind"] == "postal_address_check"
+
+
+def test_payment_summary_endpoint() -> None:
+    response = client.post("/api/v1/summaries/payment", json={"xml": _cbpr_sample("pacs008-valid")})
+
+    assert response.status_code == 200
+    assert response.json()["transactions"][0]["agent_chain"][-1]["role"] == "CdtrAgt"
+
+
+@pytest.mark.parametrize("endpoint", ["/api/v1/checks/cbpr-pacs008", "/api/v1/summaries/payment"])
+def test_cbpr_endpoints_reject_empty_xml(endpoint: str) -> None:
+    assert client.post(endpoint, json={"xml": ""}).status_code == 422

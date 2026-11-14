@@ -4,9 +4,11 @@ from typing import Any
 
 from mcp.server.mcpserver import MCPServer
 
+from app.services.cbpr_pacs008 import check_cbpr_pacs008 as check_cbpr_pacs008_service
 from app.services.identifiers import validate_bic as validate_bic_service
 from app.services.identifiers import validate_iban as validate_iban_service
 from app.services.knowledge_search import search_documents
+from app.services.payment_summary import summarize_payment as summarize_payment_service
 from app.services.postal_address import check_postal_addresses
 from app.services.registry import SchemaUnavailableError, supported_messages
 from app.services.sepa_sct import check_sepa_sct as check_sepa_sct_service
@@ -81,6 +83,36 @@ def check_sepa_sct(xml: str, enforce_unstructured_address_removal: bool = False)
         return {"kind": "validator_unavailable", "compliant": False, "transactions": [], "errors": []}
     except ValueError as exc:
         return {"kind": "invalid_input", "compliant": False, "transactions": [], "errors": [], "detail": str(exc)}
+
+
+@mcp.tool()
+def check_cbpr_pacs008(xml: str, enforce_unstructured_removal: bool = False) -> dict[str, Any]:
+    """Check a cross-border pacs.008 against CBPR+ usage rules.
+
+    Covers a single transaction per message, a mandatory lower-case UUID v4 UETR, charge bearer
+    DEBT/CRED/SHAR and when charges information is required, ISO 4217 currency decimals (e.g. no
+    decimals for JPY), IBAN/BIC validity, the CBPR+ character set, and all postal address rules.
+    Needs no XSD. Report findings exactly as returned; bank-specific rules are not applied.
+    """
+    try:
+        return check_cbpr_pacs008_service(xml, enforce_unstructured_removal)
+    except ValidatorUnavailableError:
+        return {"kind": "validator_unavailable", "compliant": False, "transactions": [], "errors": []}
+    except ValueError as exc:
+        return {"kind": "invalid_input", "compliant": False, "transactions": [], "errors": [], "detail": str(exc)}
+
+
+@mcp.tool()
+def summarize_payment(xml: str) -> dict[str, Any]:
+    """Summarise a pacs.008 or pain.001: who pays whom, amounts and currencies, dates, charges, the chain of banks
+    (BICs) and the remittance information. It restates the message; it does not validate it.
+    """
+    try:
+        return summarize_payment_service(xml)
+    except ValidatorUnavailableError:
+        return {"kind": "validator_unavailable", "transactions": [], "errors": []}
+    except ValueError as exc:
+        return {"kind": "invalid_input", "transactions": [], "errors": [], "detail": str(exc)}
 
 
 @mcp.tool()

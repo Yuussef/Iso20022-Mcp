@@ -28,6 +28,8 @@ async def test_server_exposes_all_tools() -> None:
         "check_sepa_sct",
         "validate_iban",
         "validate_bic",
+        "check_cbpr_pacs008",
+        "summarize_payment",
     }
 
 
@@ -94,3 +96,14 @@ async def test_sepa_tool_rejects_oversized_input() -> None:
         result = await client.call_tool("check_sepa_sct", {"xml": "x" * 1_000_001})
 
     assert result.structured_content["kind"] == "invalid_input"
+
+
+async def test_cbpr_and_summary_tools() -> None:
+    xml = (Path(__file__).resolve().parents[1] / "examples" / "cbpr" / "pacs008-problems.xml").read_text(encoding="utf-8")
+
+    async with Client(paydoc_mcp) as client:
+        check = await client.call_tool("check_cbpr_pacs008", {"xml": xml})
+        summary = await client.call_tool("summarize_payment", {"xml": xml})
+
+    assert check.structured_content["compliant"] is False
+    assert len(summary.structured_content["transactions"]) == 2
