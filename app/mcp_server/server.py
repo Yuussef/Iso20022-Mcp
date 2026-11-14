@@ -8,6 +8,7 @@ from app.services.cbpr_pacs008 import check_cbpr_pacs008 as check_cbpr_pacs008_s
 from app.services.identifiers import validate_bic as validate_bic_service
 from app.services.identifiers import validate_iban as validate_iban_service
 from app.services.knowledge_search import search_documents
+from app.services.mt103 import Mt103Error, convert_mt103
 from app.services.payment_summary import summarize_payment as summarize_payment_service
 from app.services.postal_address import check_postal_addresses
 from app.services.registry import SchemaUnavailableError, supported_messages
@@ -113,6 +114,23 @@ def summarize_payment(xml: str) -> dict[str, Any]:
         return {"kind": "validator_unavailable", "transactions": [], "errors": []}
     except ValueError as exc:
         return {"kind": "invalid_input", "transactions": [], "errors": [], "detail": str(exc)}
+
+
+@mcp.tool()
+def convert_mt103_to_pacs008(mt103: str) -> dict[str, Any]:
+    """Draft a CBPR+ pacs.008.001.08 from a Swift MT103 and explain what was mapped, defaulted, left
+    unstructured, truncated or not carried over, field by field. The draft is then run through
+    check_cbpr_pacs008. It is a migration aid based on public bank mapping guides, not a certified
+    Swift translation; say so when presenting the result.
+    """
+    try:
+        return convert_mt103(mt103)
+    except Mt103Error as exc:
+        return {"kind": "invalid_mt103", "xml": None, "report": [], "detail": str(exc)}
+    except ValidatorUnavailableError:
+        return {"kind": "validator_unavailable", "xml": None, "report": []}
+    except ValueError as exc:
+        return {"kind": "invalid_input", "xml": None, "report": [], "detail": str(exc)}
 
 
 @mcp.tool()

@@ -30,6 +30,7 @@ async def test_server_exposes_all_tools() -> None:
         "validate_bic",
         "check_cbpr_pacs008",
         "summarize_payment",
+        "convert_mt103_to_pacs008",
     }
 
 
@@ -107,3 +108,15 @@ async def test_cbpr_and_summary_tools() -> None:
 
     assert check.structured_content["compliant"] is False
     assert len(summary.structured_content["transactions"]) == 2
+
+
+async def test_mt103_tool() -> None:
+    mt = (Path(__file__).resolve().parents[1] / "examples" / "mt103" / "legacy-free-text.txt").read_text(encoding="utf-8")
+
+    async with Client(paydoc_mcp) as client:
+        converted = await client.call_tool("convert_mt103_to_pacs008", {"mt103": mt})
+        rejected = await client.call_tool("convert_mt103_to_pacs008", {"mt103": "hello"})
+
+    assert converted.structured_content["kind"] == "mt103_conversion"
+    assert converted.structured_content["cbpr_check"]["compliant"] is False
+    assert rejected.structured_content["kind"] == "invalid_mt103"

@@ -196,3 +196,17 @@ def test_payment_summary_endpoint() -> None:
 @pytest.mark.parametrize("endpoint", ["/api/v1/checks/cbpr-pacs008", "/api/v1/summaries/payment"])
 def test_cbpr_endpoints_reject_empty_xml(endpoint: str) -> None:
     assert client.post(endpoint, json={"xml": ""}).status_code == 422
+
+
+def test_mt103_conversion_endpoint() -> None:
+    mt = (Path(__file__).resolve().parents[1] / "examples" / "mt103" / "structured-parties.txt").read_text(encoding="utf-8")
+
+    response = client.post("/api/v1/convert/mt103", json={"mt": mt})
+
+    assert response.status_code == 200
+    assert response.json()["cbpr_check"]["compliant"] is True
+
+
+@pytest.mark.parametrize(("mt", "status"), [("not an mt103", 422), ("", 422), ("x" * 20_001, 422)])
+def test_mt103_conversion_rejects_bad_input(mt: str, status: int) -> None:
+    assert client.post("/api/v1/convert/mt103", json={"mt": mt}).status_code == status
