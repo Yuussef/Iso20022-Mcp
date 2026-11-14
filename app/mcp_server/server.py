@@ -9,6 +9,8 @@ from app.services.registry import SchemaUnavailableError, supported_messages
 from app.services.validation import (
     SchemaConfigurationError,
     ValidatorUnavailableError,
+)
+from app.services.validation import (
     validate_message as validate_xml_message,
 )
 

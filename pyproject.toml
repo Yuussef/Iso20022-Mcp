@@ -3,6 +3,7 @@ name = "paydoc-ai"
 version = "0.1.0"
 description = "Local-first ISO 20022 validation and documentation workbench"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi[standard]>=0.142.2",
@@ -15,3 +16,18 @@ ai = [
     "boto3>=1.40.0",
     "mcp[cli]>=2,<3",
 ]
+dev = [
+    "httpx>=0.27",
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 140
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]

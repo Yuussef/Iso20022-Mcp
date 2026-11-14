@@ -15,6 +15,16 @@ class SchemaConfigurationError(Exception):
     """Raised when a registered local XSD cannot be parsed or compiled."""
 
 
+def _unsupported_xml(message_id: str, code: str, message: str) -> dict[str, Any]:
+    return {
+        "message_id": message_id,
+        "valid": False,
+        "kind": "unsupported_xml",
+        "errors": [{"code": code, "message": message, "line": None, "column": None, "xpath": None}],
+        "errors_truncated": False,
+    }
+
+
 def validate_message(message_id: str, xml: str) -> dict[str, Any]:
     if len(xml) > MAX_XML_CHARS:
         raise ValueError(f"XML input exceeds the {MAX_XML_CHARS:,}-character limit.")
@@ -53,13 +63,22 @@ def validate_message(message_id: str, xml: str) -> dict[str, Any]:
             "errors_truncated": False,
         }
 
+    # ISO 20022 messages never carry a DTD. Entities are already left unexpanded by the
+    # parser, but unresolved entity references make lxml's XSD validator raise, so reject
+    # any DOCTYPE up front with a structured result instead.
+    if xml_root.getroottree().docinfo.doctype:
+        return _unsupported_xml(message_id, "DTD_NOT_ALLOWED", "XML documents with a DOCTYPE declaration are not accepted.")
+
     try:
         schema_doc = etree.parse(str(selected_schema), parser=parser)
         schema = etree.XMLSchema(schema_doc)
     except (etree.XMLSyntaxError, etree.XMLSchemaParseError) as exc:
         raise SchemaConfigurationError from exc
 
-    valid = schema.validate(xml_root)
+    try:
+        valid = schema.validate(xml_root)
+    except etree.XMLSchemaValidateError:
+        return _unsupported_xml(message_id, "XSD_VALIDATOR_ERROR", "The XML could not be processed by the schema validator.")
     error_entries = list(schema.error_log)
     errors = [
         {

@@ -6,8 +6,8 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
 from app.services.knowledge_search import search_documents
 from app.services.registry import SchemaUnavailableError, supported_messages
@@ -15,6 +15,8 @@ from app.services.validation import (
     MAX_XML_CHARS,
     SchemaConfigurationError,
     ValidatorUnavailableError,
+)
+from app.services.validation import (
     validate_message as validate_xml_message,
 )
 
