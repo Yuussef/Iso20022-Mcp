@@ -28,3 +28,6 @@ Thumbs.db
 
 # Build output (wheel, sdist, Agensi skill zip)
 dist/
+
+# Personal LinkedIn drafts and launch notes (kept locally, not published)
+docs/linkedin/
