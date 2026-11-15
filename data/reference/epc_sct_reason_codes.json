@@ -1,0 +1,46 @@
+{
+ "source": "EPC115-06 SEPA Credit Transfer Inter-PSP Implementation Guidelines 2025 Version 1.0 (effective 5 October 2025), sections 2.2.2 and 2.3.2",
+ "url": "https://www.europeanpaymentscouncil.eu/sites/default/files/kb/file/2025-10/EPC115-06%20SCT%20Inter-PSP%20IG%202025%20V1.0.pdf",
+ "retrieved": "2026-11-14",
+ "reject_pacs002": {
+  "AC01": "Account identifier incorrect (i.e. invalid IBAN)",
+  "AG02": "Operation/transaction code incorrect, invalid file format",
+  "AM05": "Duplicate payment",
+  "CNOR": "Creditor PSP is not registered under this BIC in the CSM",
+  "DNOR": "Debtor PSP is not registered under this BIC in the CSM",
+  "ED05": "Settlement of the SEPA Credit Transfer has failed",
+  "ERIN": "The Extended Remittance Information (ERI) option is not supported",
+  "FF01": "Operation/transaction code incorrect, invalid file format",
+  "MS03": "Reason not specified",
+  "RC01": "PSP identifier incorrect (i.e. invalid BIC)",
+  "RR01": "Regulatory reason (missing debtor account or identification)",
+  "RR02": "Regulatory reason (missing debtor's name or address)",
+  "RR03": "Regulatory reason (missing creditor's name or address)",
+  "RR04": "Regulatory reason",
+  "TM01": "File received after cut-off time"
+ },
+ "return_pacs004": {
+  "AC01": "Account identifier invalid (i.e. invalid IBAN or account number does not exist)",
+  "AC04": "Account closed",
+  "AC06": "Account blocked, reason not specified",
+  "AG01": "Credit transfer forbidden on this type of account (e.g. savings account)",
+  "AG02": "Operation/transaction code incorrect, invalid file format",
+  "AM05": "Duplicate payment",
+  "BE04": "Account address invalid",
+  "CNOR": "Creditor PSP is not registered under this BIC in the CSM",
+  "ERIN": "The Extended Remittance Information (ERI) option is not supported",
+  "FOCR": "Return following a cancellation request (recall)",
+  "MD07": "Beneficiary deceased",
+  "MS02": "By order of the beneficiary",
+  "MS03": "Reason not specified",
+  "RC01": "PSP identifier incorrect, e.g. invalid BIC",
+  "RR01": "Regulatory reason (missing debtor account or identification)",
+  "RR02": "Regulatory reason (missing debtor's name or address)",
+  "RR03": "Regulatory reason (missing creditor's name or address)",
+  "RR04": "Regulatory reason"
+ },
+ "notes": [
+  "FOCR is the only reason allowed for a return that answers a recall (camt.056), per section 2.6 of the same guidelines.",
+  "Descriptions are short paraphrases of the SEPA core reasons listed in the guidelines."
+ ]
+}

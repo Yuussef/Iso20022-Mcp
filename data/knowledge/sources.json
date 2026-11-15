@@ -33,5 +33,12 @@
     "message_id": null,
     "url": "https://www.jpmorgan.com/content/dam/jpmorgan/documents/payments/iso20022-mapping-guide.pdf",
     "file": "mt103-to-pacs008.md"
+  },
+  {
+    "id": "rejects-and-returns",
+    "title": "Rejects, statuses and returns: pacs.002, pain.002 and pacs.004",
+    "message_id": null,
+    "url": "https://www.iso20022.org/catalogue-messages/additional-content-messages/external-code-sets",
+    "file": "rejects-and-returns.md"
   }
 ]

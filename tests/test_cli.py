@@ -100,3 +100,28 @@ def test_output_is_plain_ascii(capsys: pytest.CaptureFixture[str]) -> None:
 
     # Findings may quote message content, but the tool's own markers stay ASCII for any console.
     assert all(line.split(" ", 1)[0].isascii() for line in out.splitlines() if line)
+
+
+def test_status_profile_is_detected_and_matches_the_original(capsys: pytest.CaptureFixture[str]) -> None:
+    status, original = EXAMPLES / "status" / "pacs002-cbpr-reject.xml", EXAMPLES / "cbpr" / "pacs008-valid.xml"
+    code, out = run(capsys, str(status), "--original", str(original))
+
+    assert code == 0
+    assert "reason AC04: Account number specified has been closed" in out
+    assert "original payment: matched by uetr" in out
+    assert "PASS meets CBPR status/return rules" in out
+
+
+def test_status_problems_exit_with_1(capsys: pytest.CaptureFixture[str]) -> None:
+    code, out = run(capsys, str(EXAMPLES / "status" / "pacs002-sepa-problems.xml"))
+
+    assert code == 1
+    assert "[ERROR] SEPA_REASON_NOT_ALLOWED" in out
+
+
+def test_read_profile_for_other_messages(capsys: pytest.CaptureFixture[str]) -> None:
+    code, out = run(capsys, str(EXAMPLES / "read" / "camt053-statement.xml"))
+
+    assert code == 0
+    assert "camt.053.001.08: BankToCustomerStatement" in out
+    assert "entries: 3 (EUR credits 500.00 / debits 1750.50)" in out

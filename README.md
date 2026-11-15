@@ -28,7 +28,7 @@ uv run iso20022-check --mt103 examples/mt103/legacy-free-text.txt
 
 ## Use with Claude (MCP)
 
-The MCP server exposes these tools over stdio: `check_sepa_sct`, `check_cbpr_pacs008`, `check_cbpr_postal_addresses`, `convert_mt103_to_pacs008`, `summarize_payment`, `validate_iban`, `validate_bic`, `validate_message`, `search_iso_documents`, `list_supported_messages` and `explain_validation_error`.
+The MCP server exposes these tools over stdio: `check_sepa_sct`, `check_cbpr_pacs008`, `check_cbpr_postal_addresses`, `explain_payment_status`, `read_iso20022_message`, `convert_mt103_to_pacs008`, `summarize_payment`, `validate_iban`, `validate_bic`, `validate_message`, `search_iso_documents`, `list_supported_messages` and `explain_validation_error`.
 
 Claude Code:
 
@@ -72,8 +72,10 @@ The script refuses to build when the front matter is missing, a file is too larg
 | CBPR+ pacs.008 check (UETR, single transaction, charges, ISO 4217 decimals, IBAN/BIC, characters) | Implemented; needs no XSD; synthetic samples included |
 | Payment summary (parties, amounts, bank chain, remittance) for pacs.008 and pain.001 | Implemented |
 | MT103 → pacs.008 draft with a field-by-field conversion report | Implemented; migration aid, not a certified translator |
+| Rejects, statuses and returns (pacs.002, pain.002, pacs.004) explained with ISO reason codes, SEPA/CBPR+ rules and matching to the original payment | Implemented |
+| Reader for any ISO 20022 message (camt.053/054 entries and balances, codes, references) | Implemented; describes, does not validate |
 | CBPR+ postal address check (structured / hybrid / unstructured) | Implemented; included in the CBPR+ check |
-| Local source manifest and keyword search with provenance links | Implemented; starter corpus contains five original project notes |
+| Local source manifest and keyword search with provenance links | Implemented; starter corpus contains six original project notes |
 | React dashboard, validator form, address check, XML file upload, search UI | Implemented |
 | MCP server exposing shared domain operations over stdio | Implemented; install the optional `ai` dependencies |
 | Bedrock Converse client invoking MCP tools and returning sources | Implemented; requires AWS credentials and a configured model with tool use |
@@ -91,13 +93,15 @@ Payment developers need to inspect message structure, understand validation erro
 - **Structured diagnostics:** return schema/parser error code, message, line, column, and XPath when available.
 - **CBPR+ pacs.008 check:** UETR, one transaction per message, DEBT/CRED/SHAR and charges information, ISO 4217 decimals, IBAN/BIC validity, the CBPR+ character set and postal addresses (see [below](#cbpr-pacs008-check)).
 - **Payment summary:** who pays whom, how much, through which banks and why, for people and agents.
+- **Rejects, statuses and returns:** explain a pacs.002, pain.002 or pacs.004 with the official ISO reason codes, check the SEPA (EPC) and CBPR+ rules, and match each status to the original payment (see [below](#rejects-statuses-and-returns)).
+- **Read any message:** restate any ISO 20022 message (statements, notifications, investigations…) with its references, amounts, parties, explained codes, entries and balances.
 - **MT103 → pacs.008:** draft the CBPR+ pacs.008 from an MT103 and report, field by field, what is mapped, defaulted, left unstructured, truncated or lost; the draft is then checked against CBPR+ (see [below](#mt103--pacs008-conversion)).
 - **SEPA Credit Transfer check:** apply the EPC 2025 SCT rules that an XSD cannot enforce, such as euro-only amounts, SLEV, IBAN-only accounts and the non-EEA debtor address rule (see [below](#sepa-credit-transfer-check)).
 - **IBAN and BIC validation:** national length and structure from the Swift IBAN Registry, mod-97 check digits, ISO 9362 BIC format, test BICs and SEPA membership. Offline, so it proves the format, not that the account exists.
 - **CBPR+ postal address check:** classify every `PstlAdr` as structured, hybrid or unstructured and report rule violations with severity, XPath and a suggested fix (see [below](#cbpr-postal-address-check)).
 - **Safe XML parsing:** disable network access, entity resolution, and DTD loading; reject any DOCTYPE; cap XML input length.
 - **Source-backed lookup:** search local Markdown references and return a source ID, excerpt, and provenance link.
-- **MCP tools:** list versions, validate a message, check SEPA credit transfers, CBPR+ pacs.008 and postal addresses, summarise a payment, convert an MT103, validate IBANs and BICs, search local documents, and look up evidence related to an error.
+- **MCP tools:** list versions, validate a message, check SEPA credit transfers, CBPR+ pacs.008 and postal addresses, explain rejects and returns, read any message, summarise a payment, convert an MT103, validate IBANs and BICs, search local documents, and look up evidence related to an error.
 - **Optional AI assistant:** Bedrock receives tool definitions through the MCP SDK and surfaces returned sources; it does not decide whether XML passes the XSD.
 - **React + FastAPI:** a responsive dashboard, validator, knowledge search, and assistant call the real API.
 
@@ -163,6 +167,24 @@ Sources: the CBPR+ pacs.008.001.08 guideline as published on the [Goldman Sachs 
 
 The mapping follows public bank guides: [Barclays MT103 vs pacs.008](https://www.barclayscorporate.com/content/dam/barclayscorporate-com/images/insights/innovation/ISO-Further-information-slides-15-16-18.pdf), [J.P. Morgan ISO 20022 mapping guide](https://www.jpmorgan.com/content/dam/jpmorgan/documents/payments/iso20022-mapping-guide.pdf) and the [Bank of Jamaica RTGS annex](https://boj.org.jm/wp-content/uploads/2024/02/Annex-I-Hybrid-Outputs.pdf). It is a **migration aid, not a certified Swift translation**: Swift's official translation rules are on MyStandards. Samples are in [`examples/mt103/`](examples/mt103).
 
+## Rejects, statuses and returns
+
+`POST /api/v1/explain/status` (MCP tool `explain_payment_status`) explains a **pacs.002** or **pain.002** status report or a **pacs.004** return. Pass the original pacs.008 or pain.001 as `original_xml` to match each status to its payment: by UETR first, then end-to-end, transaction or instruction identification. The amounts are compared too.
+
+- **Every code is explained** from the ISO 20022 External Code Sets (release 2Q2026, in [`data/reference/iso_external_codes.json`](data/reference/iso_external_codes.json)): transaction and group statuses (RJCT, ACSC, PART…), status reasons (AC01, AM04…) and return reasons (AC04, MD07…).
+- **SEPA rules** (EPC SCT Inter-PSP IG 2025):
+  - a reject uses status RJCT, one reason with its originator, a reason from the EPC reject list (AM04 is not one of them), and the original end-to-end and transaction identifications;
+  - a return uses a reason from the EPC return list, SLEV, and the returned amount equal to the original amount in euro.
+- **CBPR+ rules:**
+  - the original UETR is mandatory and must be a lower-case UUID v4;
+  - with group status RJCT, every transaction must be RJCT;
+  - a reject without a reason is a warning, because the reason is optional in CBPR+.
+- `scheme` is detected (SEPA when SLEV or service level SEPA appears, CBPR+ when an original UETR appears) or forced with `sepa`, `cbpr` or `generic`.
+
+`POST /api/v1/read` (MCP tool `read_iso20022_message`) describes **any** ISO 20022 message: its name and purpose, business application and group headers, references, amounts, parties and banks, status and reason codes with their meaning, statement entries with credit and debit totals, balances, and a structure outline. It says which tool can check the message. It does not validate it.
+
+Samples are in [`examples/status/`](examples/status) and [`examples/read/`](examples/read).
+
 ## CBPR+ postal address check
 
 The ISO 20022 XSD accepts addresses that CBPR+ rejects. `POST /api/v1/checks/postal-address` (and the MCP tool `check_cbpr_postal_addresses`) inspects every `PstlAdr` in a message and needs no schema file.
@@ -201,6 +223,8 @@ React + Vite browser app
   ├── POST /api/v1/checks/cbpr-pacs008 ──> CBPR+ rules + addresses (no XSD needed)
   ├── POST /api/v1/summaries/payment ──> parties, amounts, bank chain
   ├── POST /api/v1/convert/mt103 ──> pacs.008 draft + conversion report + CBPR+ check
+  ├── POST /api/v1/explain/status ──> pacs.002 / pain.002 / pacs.004 + ISO reason codes
+  ├── POST /api/v1/read ──> any ISO 20022 message described
   ├── POST /api/v1/checks/postal-address ──> CBPR+ address rules (no XSD needed)
   ├── POST /api/v1/identifiers/{iban,bic} ──> IBAN Registry + mod-97, ISO 9362
   ├── POST /api/v1/search   ──> local sources + provenance
@@ -379,6 +403,8 @@ Initial tools:
 | `check_cbpr_pacs008` | `xml`, optional `enforce_unstructured_removal` | CBPR+ message, transaction and address findings |
 | `summarize_payment` | `xml` | Parties, amounts, dates, charges, bank chain and remittance for pacs.008 or pain.001 |
 | `convert_mt103_to_pacs008` | `mt103` | pacs.008 draft, field-by-field report and CBPR+ check of the draft |
+| `explain_payment_status` | `xml`, optional `original_xml`, `scheme` | Statuses and reasons explained, SEPA/CBPR+ findings, match with the original payment |
+| `read_iso20022_message` | `xml` | Any message restated: references, amounts, parties, codes, entries, balances, outline |
 | `search_iso_documents` | `query`, optional `message_id`, `limit` | Excerpts with source ID, version, section/page, and provenance |
 | `explain_validation_error` | `message_id`, error details | Matching source excerpts; no invented rule when no source matches |
 

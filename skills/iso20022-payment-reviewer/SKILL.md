@@ -1,6 +1,6 @@
 ---
 name: iso20022-payment-reviewer
-description: Review ISO 20022 payment messages and identifiers offline. Use when the user shares or asks about a pacs.008, pain.001, MT103, IBAN or BIC, or asks whether a SEPA Credit Transfer or a cross-border Swift (CBPR+) payment will be accepted, why it was rejected, how to fix its postal address, or what an MT103 becomes in pacs.008. Runs deterministic checks based on public EPC and Swift-community rules and explains each finding.
+description: Review ISO 20022 payment messages and identifiers offline. Use when the user shares or asks about a pacs.008, pain.001, pacs.002, pain.002, pacs.004, camt.053/054 or any other ISO 20022 message, an MT103, an IBAN or a BIC; when they ask whether a SEPA Credit Transfer or a cross-border Swift (CBPR+) payment will be accepted, why it was rejected or returned, what a reason code such as AC01 or AM04 means, how to fix a postal address, or what an MT103 becomes in pacs.008. Runs deterministic checks based on public ISO, EPC and Swift-community rules and explains each finding.
 ---
 
 # ISO 20022 payment reviewer
@@ -14,6 +14,8 @@ You review payment messages with `iso20022-check`, a deterministic, offline comm
 - The user asks whether an **IBAN** or **BIC** is valid.
 - The user has an **MT103** and wants to know what the equivalent pacs.008 looks like or what data is missing for CBPR+.
 - The user asks about **structured, hybrid or unstructured postal addresses** in payments.
+- The user has a **rejection, status or return** (pacs.002, pain.002, pacs.004) and asks why, what a reason code means, or which payment it refers to.
+- The user shares **any other ISO 20022 message** (a camt.053 statement, a camt.054 notification, a pacs.009…) and asks what it contains.
 
 ## Setup (once)
 
@@ -42,9 +44,12 @@ Save the message the user gave you to a temporary file first. Use their file if 
 | Simulate the end of unstructured addresses | add `--enforce-address-removal` |
 | Validate an IBAN / a BIC | `CHECK --iban "DE89 3704 0044 0532 0130 00"` / `CHECK --bic DEUTDEFF` |
 | Draft a pacs.008 from an MT103 | `CHECK --mt103 message.txt` |
+| Explain a reject, status or return | `CHECK status.xml` (add `--original payment.xml` to match it to the payment) |
+| Force the scheme for a status or return | add `--scheme sepa`, `--scheme cbpr` or `--scheme generic` |
+| Describe any other ISO 20022 message | `CHECK message.xml` (or `--profile read`) |
 | Machine-readable output | add `--json` |
 
-The automatic choice uses SEPA for pain.001 and for messages with service level `SEPA`, and CBPR+ otherwise. If the user says which scheme applies, pass `--profile`.
+The automatic choice explains pacs.002, pain.002 and pacs.004 as statuses or returns, checks pain.001 and pacs.008 with service level `SEPA` against the SEPA rules and other pacs.008 against CBPR+, and only describes every other message. If the user says which scheme applies, pass `--profile`.
 
 Exit codes: `0` no rule errors, `1` rule errors found, `2` the input could not be read (malformed XML, a DOCTYPE, which is refused for safety, or not an MT103).
 
@@ -53,8 +58,9 @@ Exit codes: `0` no rule errors, `1` rule errors found, `2` the input could not b
 1. Start with the verdict line (`PASS` or `FAIL`), the scheme and the message type.
 2. With `--summary`, say in one sentence who pays whom, how much, and through which banks.
 3. Group the findings: **errors** first (the payment is likely to be rejected), then **warnings** (accepted today, but risky or soon to change), then **info**. For each one, give the rule ID, a plain explanation, the suggested fix the tool printed, and the XPath so the user can find the element.
-4. For an MT103 conversion, list the fields marked `MISSING`, `UNMAPPED`, `TRUNCATED` or `UNSTRUCTURED`, and repeat that the draft is a migration aid, **not a certified Swift translation**.
-5. End with the limits below when they matter.
+4. For a reject or return, give each reason code with the meaning the tool printed (ISO, and SEPA when shown), who raised it, and whether the original payment was found. Suggest the practical next step, for example checking the IBAN for AC01 or contacting the beneficiary for AC04, without inventing a cause the code does not state.
+5. For an MT103 conversion, list the fields marked `MISSING`, `UNMAPPED`, `TRUNCATED` or `UNSTRUCTURED`, and repeat that the draft is a migration aid, **not a certified Swift translation**.
+6. End with the limits below when they matter.
 
 ## Facts to state correctly
 

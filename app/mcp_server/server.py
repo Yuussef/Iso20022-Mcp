@@ -8,7 +8,9 @@ from app.services.cbpr_pacs008 import check_cbpr_pacs008 as check_cbpr_pacs008_s
 from app.services.identifiers import validate_bic as validate_bic_service
 from app.services.identifiers import validate_iban as validate_iban_service
 from app.services.knowledge_search import search_documents
+from app.services.message_reader import read_message
 from app.services.mt103 import Mt103Error, convert_mt103
+from app.services.payment_status import explain_payment_status as explain_payment_status_service
 from app.services.payment_summary import summarize_payment as summarize_payment_service
 from app.services.postal_address import check_postal_addresses
 from app.services.registry import SchemaUnavailableError, supported_messages
@@ -22,6 +24,39 @@ from app.services.validation import (
 )
 
 mcp = MCPServer(name="ISO 20022 payments (PayDoc AI)", version="0.2.0")
+
+
+@mcp.tool()
+def explain_payment_status(xml: str, original_xml: str | None = None, scheme: str = "auto") -> dict[str, Any]:
+    """Explain why a payment was rejected, returned or what its status is, from a pacs.002, pain.002 or pacs.004.
+
+    Every status and reason code (e.g. RJCT, AC01, AM04, AC04) is explained from the official ISO 20022
+    external code sets. SEPA (EPC) and CBPR+ rules are checked: allowed SEPA reject/return reasons,
+    originator, original references, returned amount equal to the original, original UETR in CBPR+.
+    Pass the original pacs.008 or pain.001 as original_xml to match each status to its payment.
+    scheme: auto (default), sepa, cbpr or generic. Report the explanation and findings as returned.
+    """
+    try:
+        return explain_payment_status_service(xml, original_xml, scheme)
+    except ValidatorUnavailableError:
+        return {"kind": "validator_unavailable", "transactions": [], "errors": []}
+    except ValueError as exc:
+        return {"kind": "invalid_input", "transactions": [], "errors": [], "detail": str(exc)}
+
+
+@mcp.tool()
+def read_iso20022_message(xml: str) -> dict[str, Any]:
+    """Read any ISO 20022 message (pacs, pain, camt such as camt.053 statements, head, admi) and restate it:
+    message name and purpose, headers, references (UETR, end-to-end IDs), amounts, parties and agents,
+    status and reason codes with their ISO meaning, statement entries, totals and balances, and the
+    structure. It does not judge validity; it lists which specialised tool can check the message.
+    """
+    try:
+        return read_message(xml)
+    except ValidatorUnavailableError:
+        return {"kind": "validator_unavailable", "errors": []}
+    except ValueError as exc:
+        return {"kind": "invalid_input", "errors": [], "detail": str(exc)}
 
 
 @mcp.tool()

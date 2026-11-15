@@ -55,6 +55,7 @@ packages = ["app"]
 "data/knowledge/sepa-credit-transfer.md" = "app/data/knowledge/sepa-credit-transfer.md"
 "data/knowledge/cbpr-pacs008.md" = "app/data/knowledge/cbpr-pacs008.md"
 "data/knowledge/mt103-to-pacs008.md" = "app/data/knowledge/mt103-to-pacs008.md"
+"data/knowledge/rejects-and-returns.md" = "app/data/knowledge/rejects-and-returns.md"
 "data/schemas/registry.json" = "app/data/schemas/registry.json"
 "data/schemas/demo-payment.xsd" = "app/data/schemas/demo-payment.xsd"
 

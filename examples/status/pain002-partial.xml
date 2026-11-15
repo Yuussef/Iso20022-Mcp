@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic customer status report (pain.002.001.10) for examples/sepa/pain001-valid.xml: one accepted, one rejected. -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.10">
+  <CstmrPmtStsRpt>
+    <GrpHdr>
+      <MsgId>DEMO-PSR-0001</MsgId>
+      <CreDtTm>2026-11-14T09:30:00</CreDtTm>
+    </GrpHdr>
+    <OrgnlGrpInfAndSts>
+      <OrgnlMsgId>DEMO-PAIN-0001</OrgnlMsgId>
+      <OrgnlMsgNmId>pain.001.001.09</OrgnlMsgNmId>
+      <GrpSts>PART</GrpSts>
+    </OrgnlGrpInfAndSts>
+    <OrgnlPmtInfAndSts>
+      <OrgnlPmtInfId>DEMO-BATCH-01</OrgnlPmtInfId>
+      <PmtInfSts>PART</PmtInfSts>
+      <TxInfAndSts>
+        <OrgnlEndToEndId>SUPPLIER-0001</OrgnlEndToEndId>
+        <TxSts>ACCP</TxSts>
+      </TxInfAndSts>
+      <TxInfAndSts>
+        <OrgnlEndToEndId>SUPPLIER-0002</OrgnlEndToEndId>
+        <TxSts>RJCT</TxSts>
+        <StsRsnInf>
+          <Rsn><Cd>AM04</Cd></Rsn>
+          <AddtlInf>INSUFFICIENT FUNDS ON DEBTOR ACCOUNT</AddtlInf>
+        </StsRsnInf>
+      </TxInfAndSts>
+    </OrgnlPmtInfAndSts>
+  </CstmrPmtStsRpt>
+</Document>

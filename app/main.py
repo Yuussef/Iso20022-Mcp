@@ -12,7 +12,9 @@ from pydantic import BaseModel, Field
 from app.services.cbpr_pacs008 import check_cbpr_pacs008
 from app.services.identifiers import validate_bic, validate_iban
 from app.services.knowledge_search import search_documents
+from app.services.message_reader import read_message
 from app.services.mt103 import MAX_MT_CHARS, Mt103Error, convert_mt103
+from app.services.payment_status import SCHEMES, explain_payment_status
 from app.services.payment_summary import summarize_payment
 from app.services.postal_address import check_postal_addresses
 from app.services.registry import SchemaUnavailableError, supported_messages
@@ -30,7 +32,7 @@ app = FastAPI(
     title="PayDoc AI API",
     description=(
         "Deterministic ISO 20022 schema validation, SEPA Credit Transfer and CBPR+ usage-rule checks, "
-        "IBAN/BIC validation and source-backed lookup."
+        "rejects and returns explained, IBAN/BIC validation, a reader for any message and source-backed lookup."
     ),
     version="0.1.0",
 )
@@ -65,6 +67,12 @@ class SepaCheckRequest(BaseModel):
 
 class XmlRequest(BaseModel):
     xml: str = Field(min_length=1, max_length=MAX_XML_CHARS)
+
+
+class StatusRequest(BaseModel):
+    xml: str = Field(min_length=1, max_length=MAX_XML_CHARS, description="pacs.002, pain.002 or pacs.004")
+    original_xml: str | None = Field(default=None, max_length=MAX_XML_CHARS, description="Optional original pacs.008 or pain.001 to match")
+    scheme: str = Field(default="auto", pattern="^(" + "|".join(SCHEMES) + ")$")
 
 
 class Mt103Request(BaseModel):
@@ -143,6 +151,22 @@ def check_cbpr_customer_credit_transfer(payload: PostalAddressCheckRequest) -> d
 def summarize_credit_transfer(payload: XmlRequest) -> dict[str, Any]:
     try:
         return summarize_payment(payload.xml)
+    except ValidatorUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Install the lxml dependency to read XML.") from exc
+
+
+@app.post("/api/v1/explain/status")
+def explain_status(payload: StatusRequest) -> dict[str, Any]:
+    try:
+        return explain_payment_status(payload.xml, payload.original_xml or None, payload.scheme)
+    except ValidatorUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Install the lxml dependency to read XML.") from exc
+
+
+@app.post("/api/v1/read")
+def read_any_message(payload: XmlRequest) -> dict[str, Any]:
+    try:
+        return read_message(payload.xml)
     except ValidatorUnavailableError as exc:
         raise HTTPException(status_code=503, detail="Install the lxml dependency to read XML.") from exc
 

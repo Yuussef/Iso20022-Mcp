@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic end-of-day statement (camt.053.001.08). Not a real account. -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08">
+  <BkToCstmrStmt>
+    <GrpHdr>
+      <MsgId>DEMO-STMT-20261116</MsgId>
+      <CreDtTm>2026-11-16T23:00:00</CreDtTm>
+    </GrpHdr>
+    <Stmt>
+      <Id>STMT-2026-320</Id>
+      <Acct>
+        <Id><IBAN>FR1420041010050500013M02606</IBAN></Id>
+        <Ccy>EUR</Ccy>
+        <Svcr><FinInstnId><BICFI>DEMOFRPPXXX</BICFI></FinInstnId></Svcr>
+      </Acct>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="EUR">10000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-11-16</Dt></Dt>
+      </Bal>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="EUR">8749.50</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-11-16</Dt></Dt>
+      </Bal>
+      <Ntry>
+        <Amt Ccy="EUR">1250.50</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts><Cd>BOOK</Cd></Sts>
+        <BookgDt><Dt>2026-11-16</Dt></BookgDt>
+        <ValDt><Dt>2026-11-16</Dt></ValDt>
+        <AcctSvcrRef>DEMO-BOOK-0001</AcctSvcrRef>
+        <NtryDtls><TxDtls>
+          <Refs><EndToEndId>INVOICE-2026-0042</EndToEndId></Refs>
+          <RltdPties><Cdtr><Pty><Nm>Beispiel GmbH</Nm></Pty></Cdtr></RltdPties>
+          <RmtInf><Ustrd>Invoice 2026-0042</Ustrd></RmtInf>
+        </TxDtls></NtryDtls>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">500.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts><Cd>BOOK</Cd></Sts>
+        <BookgDt><Dt>2026-11-16</Dt></BookgDt>
+        <AcctSvcrRef>DEMO-BOOK-0002</AcctSvcrRef>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">500.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts><Cd>BOOK</Cd></Sts>
+        <BookgDt><Dt>2026-11-16</Dt></BookgDt>
+        <AcctSvcrRef>DEMO-BOOK-0003</AcctSvcrRef>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

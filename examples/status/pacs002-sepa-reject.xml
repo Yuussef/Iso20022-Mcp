@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic SEPA reject (pacs.002.001.10) of examples/sepa/pacs008-valid.xml. Not a real message. -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.002.001.10">
+  <FIToFIPmtStsRpt>
+    <GrpHdr>
+      <MsgId>DEMO-RJCT-0001</MsgId>
+      <CreDtTm>2026-11-16T09:15:00</CreDtTm>
+      <InstgAgt><FinInstnId><BICFI>DEMODEFFXXX</BICFI></FinInstnId></InstgAgt>
+      <InstdAgt><FinInstnId><BICFI>DEMOFRPPXXX</BICFI></FinInstnId></InstdAgt>
+    </GrpHdr>
+    <OrgnlGrpInfAndSts>
+      <OrgnlMsgId>DEMO-MSG-0001</OrgnlMsgId>
+      <OrgnlMsgNmId>pacs.008.001.08</OrgnlMsgNmId>
+    </OrgnlGrpInfAndSts>
+    <TxInfAndSts>
+      <StsId>DEMO-RJCT-0001-1</StsId>
+      <OrgnlInstrId>DEMO-INSTR-1</OrgnlInstrId>
+      <OrgnlEndToEndId>INVOICE-2026-0042</OrgnlEndToEndId>
+      <OrgnlTxId>DEMO-TX-0001</OrgnlTxId>
+      <TxSts>RJCT</TxSts>
+      <StsRsnInf>
+        <Orgtr><Id><OrgId><AnyBIC>DEMODEFFXXX</AnyBIC></OrgId></Id></Orgtr>
+        <Rsn><Cd>AC01</Cd></Rsn>
+      </StsRsnInf>
+      <OrgnlTxRef>
+        <IntrBkSttlmAmt Ccy="EUR">1250.50</IntrBkSttlmAmt>
+        <PmtTpInf><SvcLvl><Cd>SEPA</Cd></SvcLvl></PmtTpInf>
+      </OrgnlTxRef>
+    </TxInfAndSts>
+  </FIToFIPmtStsRpt>
+</Document>
