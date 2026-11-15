@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as package_version
 from typing import Any
 
 from mcp.server.mcpserver import MCPServer
@@ -23,7 +25,12 @@ from app.services.validation import (
     validate_message as validate_xml_message,
 )
 
-mcp = MCPServer(name="ISO 20022 payments (PayDoc AI)", version="0.2.0")
+try:
+    SERVER_VERSION = package_version("iso20022-mcp")
+except PackageNotFoundError:  # running from a source tree that was never installed
+    SERVER_VERSION = "0.0.0"
+
+mcp = MCPServer(name="ISO 20022 payments (PayDoc AI)", version=SERVER_VERSION)
 
 
 @mcp.tool()

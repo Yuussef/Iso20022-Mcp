@@ -24,12 +24,12 @@ The tool is open source (MIT): https://github.com/Yuussef/Iso20022-Mcp
 It needs Python 3.11+ and [uv](https://docs.astral.sh/uv/). The first run downloads the package from GitHub and its Python dependencies from PyPI. That is the only network access. Every check afterwards runs locally and no message content leaves the machine.
 
 ```bash
-uvx --from git+https://github.com/Yuussef/Iso20022-Mcp@v0.2.0 iso20022-check --help
+uvx --from git+https://github.com/Yuussef/Iso20022-Mcp@v0.3.0 iso20022-check --help
 ```
 
-If `uvx` is unavailable, ask the user to install uv, or to run `pip install git+https://github.com/Yuussef/Iso20022-Mcp@v0.2.0` and then call `iso20022-check` directly. Do not install anything without telling the user.
+If `uvx` is unavailable, ask the user to install uv, or to run `pip install git+https://github.com/Yuussef/Iso20022-Mcp@v0.3.0` and then call `iso20022-check` directly. Do not install anything without telling the user.
 
-Below, `CHECK` means `uvx --from git+https://github.com/Yuussef/Iso20022-Mcp@v0.2.0 iso20022-check`.
+Below, `CHECK` means `uvx --from git+https://github.com/Yuussef/Iso20022-Mcp@v0.3.0 iso20022-check`.
 
 ## Commands
 

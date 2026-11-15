@@ -80,3 +80,15 @@ def test_install_commands_are_pinned_to_the_package_version() -> None:
         pins = re.findall(r"git\+https://github\.com/Yuussef/Iso20022-Mcp(@v[\w.]+)?", content)
         assert pins, f"{path.name} has no install command"
         assert set(pins) == {f"@v{version}"}, f"{path.name} pins {set(pins)}, expected @v{version}"
+
+
+def test_mcp_server_reports_the_package_version() -> None:
+    from app.mcp_server.server import SERVER_VERSION
+
+    assert SERVER_VERSION == pyproject()["project"]["version"]
+
+
+def test_changelog_has_an_entry_for_the_current_version() -> None:
+    version = pyproject()["project"]["version"]
+
+    assert f"## v{version}" in (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")

@@ -7,7 +7,7 @@ Use the synthetic samples only. Every BIC is a fictitious `DEMO…` code, and th
 1. Merge the open PRs and check that CI is green.
 2. Redeploy the Render demo and open each page once, since the free plan sleeps after 15 minutes.
 3. Replace `[GitHub link]` and `[demo link]` in the post drafts.
-4. The install commands are pinned to the `v0.2.0` tag. For a new release, bump `version` in `pyproject.toml`, tag `vX.Y.Z` on `main`, then update the `@v…` pins in the README and in `SKILL.md`. A test checks that the pins match the package version.
+4. The install commands are pinned to the `v0.3.0` tag. For a new release, bump `version` in `pyproject.toml`, tag `vX.Y.Z` on `main`, then update the `@v…` pins in the README and in `SKILL.md`. A test checks that the pins match the package version.
 
 ## Screenshots (1200 × 675 or 1080 × 1080)
 
