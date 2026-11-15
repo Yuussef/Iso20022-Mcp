@@ -210,3 +210,29 @@ def test_mt103_conversion_endpoint() -> None:
 @pytest.mark.parametrize(("mt", "status"), [("not an mt103", 422), ("", 422), ("x" * 20_001, 422)])
 def test_mt103_conversion_rejects_bad_input(mt: str, status: int) -> None:
     assert client.post("/api/v1/convert/mt103", json={"mt": mt}).status_code == status
+
+
+def _example(name: str) -> str:
+    return (Path(__file__).resolve().parents[1] / "examples" / name).read_text(encoding="utf-8")
+
+
+def test_status_endpoint_with_original() -> None:
+    response = client.post(
+        "/api/v1/explain/status",
+        json={"xml": _example("status/pacs002-cbpr-reject.xml"), "original_xml": _example("cbpr/pacs008-valid.xml")},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["transactions"][0]["match"]["matched_by"] == "uetr"
+
+
+@pytest.mark.parametrize("payload", [{"xml": ""}, {"xml": "<a/>", "scheme": "swift"}])
+def test_status_endpoint_rejects_invalid_requests(payload: dict) -> None:
+    assert client.post("/api/v1/explain/status", json=payload).status_code == 422
+
+
+def test_read_endpoint() -> None:
+    response = client.post("/api/v1/read", json={"xml": _example("read/camt053-statement.xml")})
+
+    assert response.status_code == 200
+    assert response.json()["message_name"] == "BankToCustomerStatement"

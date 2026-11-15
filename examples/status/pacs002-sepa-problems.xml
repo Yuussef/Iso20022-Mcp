@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic SEPA pacs.002 that breaks EPC reject rules. Not a real message. -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.002.001.10">
+  <FIToFIPmtStsRpt>
+    <GrpHdr>
+      <MsgId>DEMO-RJCT-0002</MsgId>
+      <CreDtTm>2026-11-16T09:15:00</CreDtTm>
+    </GrpHdr>
+    <OrgnlGrpInfAndSts>
+      <OrgnlMsgId>DEMO-MSG-0001</OrgnlMsgId>
+      <OrgnlMsgNmId>pain.001.001.09</OrgnlMsgNmId>
+      <GrpSts>ACCP</GrpSts>
+    </OrgnlGrpInfAndSts>
+    <TxInfAndSts>
+      <OrgnlEndToEndId>INVOICE-2026-0042</OrgnlEndToEndId>
+      <TxSts>ACSC</TxSts>
+      <StsRsnInf>
+        <Rsn><Cd>AM04</Cd></Rsn>
+      </StsRsnInf>
+      <StsRsnInf>
+        <Rsn><Cd>ZZ99</Cd></Rsn>
+      </StsRsnInf>
+      <OrgnlTxRef>
+        <PmtTpInf><SvcLvl><Cd>SEPA</Cd></SvcLvl></PmtTpInf>
+      </OrgnlTxRef>
+    </TxInfAndSts>
+  </FIToFIPmtStsRpt>
+</Document>

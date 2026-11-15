@@ -22,23 +22,33 @@ from typing import Any
 
 from app.services.cbpr_pacs008 import check_cbpr_pacs008
 from app.services.identifiers import validate_bic, validate_iban
+from app.services.message_reader import read_message
 from app.services.mt103 import Mt103Error, convert_mt103
+from app.services.payment_status import SCHEMES, explain_payment_status
 from app.services.payment_summary import summarize_payment
 from app.services.postal_address import check_postal_addresses
 from app.services.sepa_sct import check_sepa_sct
 from app.services.xml_safety import UntrustedXmlError, parse_untrusted_xml
 from app.services.xml_tools import local_name, text
 
-PROFILES = ("auto", "sepa", "cbpr", "address")
+PROFILES = ("auto", "sepa", "cbpr", "address", "status", "read")
+STATUS_ROOTS = {"FIToFIPmtStsRpt", "CstmrPmtStsRpt", "PmtRtr"}
+PAYMENT_ROOTS = {"FIToFICstmrCdtTrf", "CstmrCdtTrfInitn"}
 
 
 def _choose_profile(xml: str) -> str:
-    """SEPA for pain.001 and for euro pacs.008 with service level SEPA; CBPR+ for other pacs.008."""
+    """status for pacs.002/pain.002/pacs.004; SEPA for pain.001 and pacs.008 with service level SEPA;
+    CBPR+ for other pacs.008; read for every other message."""
     try:
         root = parse_untrusted_xml(xml)
     except UntrustedXmlError:
         return "cbpr"
-    if any(local_name(element) == "CstmrCdtTrfInitn" for element in root.iter()):
+    names = {local_name(element) for element in root.iter()}
+    if names & STATUS_ROOTS:
+        return "status"
+    if not names & PAYMENT_ROOTS:
+        return "read"
+    if "CstmrCdtTrfInitn" in names:
         return "sepa"
     service_levels = {
         text(element) for element in root.iter() if local_name(element) == "Cd" and local_name(element.getparent()) == "SvcLvl"
@@ -94,6 +104,55 @@ def _print_summary(summary: dict[str, Any]) -> None:
             print(f"  UETR {transaction['uetr']}")
 
 
+def _print_status(result: dict[str, Any]) -> None:
+    group = result.get("group") or {}
+    if group.get("status"):
+        status = group["status"]
+        print(f"* group status {status['code']}: {status['meaning'] or 'not an ISO code'}")
+    for transaction in result.get("transactions", []):
+        status = transaction.get("status") or {}
+        original = transaction["original"]
+        reference = original.get("uetr") or original.get("end_to_end_id") or original.get("transaction_id") or "?"
+        print(f"* {status.get('code', '?')} {reference}: {status.get('meaning') or 'not an ISO code'}")
+        for reason in transaction.get("reasons", []):
+            label = reason.get("code") or reason.get("proprietary") or "?"
+            print(f"  reason {label}: {reason.get('meaning') or 'not in the ISO list'}")
+            if reason.get("scheme_meaning"):
+                print(f"    SEPA: {reason['scheme_meaning']}")
+            for info in reason.get("additional_info", []):
+                print(f"    info: {info}")
+        if transaction.get("returned_amount"):
+            amount = transaction["returned_amount"]
+            print(f"  returned {amount['value']} {amount['currency']}")
+        if transaction.get("match"):
+            matched = transaction["match"]["matched_by"]
+            print(f"  original payment: {'matched by ' + matched if matched else 'NOT FOUND'}")
+
+
+def _print_reading(result: dict[str, Any]) -> int:
+    if result.get("errors"):
+        return _print_findings(result, "reader")
+    print(f"* {result.get('message_id') or 'unknown message'}: {result.get('message_name') or '?'}")
+    if result.get("purpose"):
+        print(f"  {result['purpose']}")
+    references = {key: value for key, value in result["references"].items() if value}
+    for key, value in references.items():
+        print(f"  {key}: {', '.join(value[:5])}")
+    if result["amounts"]:
+        print(f"  amounts: {len(result['amounts'])} (first: {result['amounts'][0]['value']} {result['amounts'][0]['currency']})")
+    for code in result["codes"]:
+        print(f"  {code['element']} {code['code']}: {code['meaning'] or 'not in the ISO list'}")
+    entries = result.get("entries")
+    if entries:
+        totals = "; ".join(f"{ccy} credits {t['credits']} / debits {t['debits']}" for ccy, t in entries["totals"].items())
+        print(f"  entries: {entries['count']} ({totals})")
+    for balance in result["balances"]:
+        print(f"  balance {balance['type']}: {balance['amount']} {balance['currency']} {balance['credit_debit']} on {balance['date']}")
+    if result["suggested_tools"]:
+        print(f"  check it with: {', '.join(result['suggested_tools'])}")
+    return 0
+
+
 def _emit(payload: Any, as_json: bool) -> None:
     if as_json:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
@@ -106,7 +165,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="iso20022-check", description="Offline ISO 20022 payment checks (SEPA, CBPR+, addresses, IBAN/BIC, MT103)."
     )
-    parser.add_argument("file", nargs="?", help="ISO 20022 XML file (pacs.008 or pain.001)")
+    parser.add_argument(
+        "file", nargs="?", help="ISO 20022 XML file (pacs.008, pain.001, pacs.002, pain.002, pacs.004 or any other message)"
+    )
+    parser.add_argument("--original", metavar="FILE", help="with a status or return: the original pacs.008 or pain.001 to match")
+    parser.add_argument("--scheme", choices=SCHEMES, default="auto", help="with a status or return: rule set (default: detected)")
     parser.add_argument("--profile", choices=PROFILES, default="auto", help="rule set to apply (default: picked from the message)")
     parser.add_argument("--summary", action="store_true", help="also print who pays whom through which banks")
     parser.add_argument("--enforce-address-removal", action="store_true", help="treat unstructured addresses as errors")
@@ -159,6 +222,21 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     profile = _choose_profile(xml) if args.profile == "auto" else args.profile
+    if profile in {"status", "read"}:
+        try:
+            original = Path(args.original).read_text(encoding="utf-8") if args.original else None
+            result = explain_payment_status(xml, original, args.scheme) if profile == "status" else read_message(xml)
+        except (OSError, ValueError) as exc:
+            print(f"FAIL {exc}", file=sys.stderr)
+            return 2
+        if args.json:
+            _emit({"profile": profile, "result": result}, True)
+            return 2 if result.get("errors") else (1 if result.get("compliant") is False and result.get("in_scope") else 0)
+        if profile == "read":
+            return _print_reading(result)
+        _print_status(result)
+        return _print_findings(result, f"{(result.get('scheme') or 'generic').upper()} status/return rules")
+
     try:
         if profile == "sepa":
             result, title = check_sepa_sct(xml, args.enforce_address_removal), "EPC SEPA Credit Transfer rules"

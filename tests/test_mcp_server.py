@@ -31,6 +31,8 @@ async def test_server_exposes_all_tools() -> None:
         "check_cbpr_pacs008",
         "summarize_payment",
         "convert_mt103_to_pacs008",
+        "explain_payment_status",
+        "read_iso20022_message",
     }
 
 
@@ -120,3 +122,20 @@ async def test_mt103_tool() -> None:
     assert converted.structured_content["kind"] == "mt103_conversion"
     assert converted.structured_content["cbpr_check"]["compliant"] is False
     assert rejected.structured_content["kind"] == "invalid_mt103"
+
+
+async def test_status_and_reader_tools() -> None:
+    examples = Path(__file__).resolve().parents[1] / "examples"
+    status = (examples / "status" / "pacs004-sepa-return.xml").read_text(encoding="utf-8")
+    original = (examples / "sepa" / "pacs008-valid.xml").read_text(encoding="utf-8")
+    statement = (examples / "read" / "camt053-statement.xml").read_text(encoding="utf-8")
+
+    async with Client(paydoc_mcp) as client:
+        explained = await client.call_tool("explain_payment_status", {"xml": status, "original_xml": original})
+        bad_scheme = await client.call_tool("explain_payment_status", {"xml": status, "scheme": "swift"})
+        reading = await client.call_tool("read_iso20022_message", {"xml": statement})
+
+    assert explained.structured_content["match"]["matched"] == 1
+    assert explained.structured_content["transactions"][0]["reasons"][0]["code"] == "AC04"
+    assert bad_scheme.structured_content["kind"] == "invalid_input"
+    assert reading.structured_content["entries"]["count"] == 3

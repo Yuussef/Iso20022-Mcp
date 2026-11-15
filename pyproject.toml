@@ -1,7 +1,7 @@
 [project]
 name = "iso20022-mcp"
-version = "0.2.0"
-description = "ISO 20022 payment checks for people and AI agents: SEPA Credit Transfer, CBPR+ pacs.008, postal addresses, IBAN/BIC and MT103 to pacs.008, as an MCP server, a CLI and a web workbench"
+version = "0.3.0"
+description = "ISO 20022 payment checks for people and AI agents: SEPA Credit Transfer, CBPR+ pacs.008, rejects and returns, postal addresses, IBAN/BIC, MT103 to pacs.008 and a reader for any message, as an MCP server, a CLI and a web workbench"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
@@ -55,6 +55,7 @@ packages = ["app"]
 "data/knowledge/sepa-credit-transfer.md" = "app/data/knowledge/sepa-credit-transfer.md"
 "data/knowledge/cbpr-pacs008.md" = "app/data/knowledge/cbpr-pacs008.md"
 "data/knowledge/mt103-to-pacs008.md" = "app/data/knowledge/mt103-to-pacs008.md"
+"data/knowledge/rejects-and-returns.md" = "app/data/knowledge/rejects-and-returns.md"
 "data/schemas/registry.json" = "app/data/schemas/registry.json"
 "data/schemas/demo-payment.xsd" = "app/data/schemas/demo-payment.xsd"
 

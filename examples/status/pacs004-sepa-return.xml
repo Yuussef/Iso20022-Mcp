@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic SEPA return (pacs.004.001.09) of examples/sepa/pacs008-valid.xml. Not a real message. -->
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.004.001.09">
+  <PmtRtr>
+    <GrpHdr>
+      <MsgId>DEMO-RTRN-0001</MsgId>
+      <CreDtTm>2026-11-18T10:00:00</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <TtlRtrdIntrBkSttlmAmt Ccy="EUR">1250.50</TtlRtrdIntrBkSttlmAmt>
+      <IntrBkSttlmDt>2026-11-18</IntrBkSttlmDt>
+      <SttlmInf><SttlmMtd>CLRG</SttlmMtd></SttlmInf>
+    </GrpHdr>
+    <TxInf>
+      <RtrId>DEMO-RTRN-0001-1</RtrId>
+      <OrgnlGrpInf>
+        <OrgnlMsgId>DEMO-MSG-0001</OrgnlMsgId>
+        <OrgnlMsgNmId>pacs.008.001.08</OrgnlMsgNmId>
+      </OrgnlGrpInf>
+      <OrgnlInstrId>DEMO-INSTR-1</OrgnlInstrId>
+      <OrgnlEndToEndId>INVOICE-2026-0042</OrgnlEndToEndId>
+      <OrgnlTxId>DEMO-TX-0001</OrgnlTxId>
+      <OrgnlIntrBkSttlmAmt Ccy="EUR">1250.50</OrgnlIntrBkSttlmAmt>
+      <RtrdIntrBkSttlmAmt Ccy="EUR">1250.50</RtrdIntrBkSttlmAmt>
+      <ChrgBr>SLEV</ChrgBr>
+      <RtrRsnInf>
+        <Orgtr><Id><OrgId><AnyBIC>DEMODEFFXXX</AnyBIC></OrgId></Id></Orgtr>
+        <Rsn><Cd>AC04</Cd></Rsn>
+      </RtrRsnInf>
+    </TxInf>
+  </PmtRtr>
+</Document>

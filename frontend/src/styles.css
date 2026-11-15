@@ -304,3 +304,11 @@ select:disabled { opacity: 0.65; }
 .workflow-link { width: 100%; border: 0; border-top: 1px solid #8091ab17; background: transparent; color: inherit; text-align: left; font: inherit; cursor: pointer; }
 .workflow-link:hover strong { color: #c9bcff; }
 .workflow-link:hover .workflow-state { color: #baaafa; }
+
+/* Rejects & returns, and the generic reader */
+.sample-wrap { flex-wrap: wrap; justify-content: flex-end; row-gap: 4px; }
+.original-label { margin-top: 14px; }
+.original-editor { min-height: 110px; }
+.reason-card strong { color: #e7b881; }
+.reader-list { margin: 6px 0 0; padding-left: 16px; color: #b4c0d0; font-size: 9px; line-height: 1.7; overflow-wrap: anywhere; }
+.reason-card small { display: block; margin-top: 3px; }
