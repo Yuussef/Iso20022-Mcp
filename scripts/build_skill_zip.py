@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILL_DIR = ROOT / "skills" / "iso20022-payment-reviewer"
 OUTPUT = ROOT / "dist" / "iso20022-payment-reviewer.zip"
 MAX_FILE_BYTES = 200_000
+TEXT_SUFFIXES = {".md", ".txt", ".json", ".py", ".sh", ".yaml", ".yml", ".toml"}
 SECRET_PATTERNS = [
     re.compile(pattern)
     for pattern in (
@@ -63,11 +64,15 @@ def build(skill_dir: Path = SKILL_DIR, output: Path = OUTPUT) -> Path:
     if problems:
         raise SystemExit("Refusing to build:\n- " + "\n- ".join(problems))
     output.parent.mkdir(parents=True, exist_ok=True)
+    files = [path for path in sorted(skill_dir.rglob("*")) if path.is_file()] + [ROOT / "LICENSE"]
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        for path in sorted(skill_dir.rglob("*")):
-            if path.is_file():
-                archive.write(path, Path(skill_dir.name) / path.relative_to(skill_dir))
-        archive.write(ROOT / "LICENSE", Path(skill_dir.name) / "LICENSE")
+        for path in files:
+            name = (Path(skill_dir.name) / (path.relative_to(skill_dir) if path.is_relative_to(skill_dir) else path.name)).as_posix()
+            if path.suffix in TEXT_SUFFIXES or path.name == "LICENSE":
+                # Git on Windows may check text out with CRLF; ship LF so front matter parses everywhere.
+                archive.writestr(name, path.read_bytes().replace(b"\r\n", b"\n"))
+            else:
+                archive.write(path, name)
     return output
 
 

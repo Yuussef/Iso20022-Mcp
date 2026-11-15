@@ -92,3 +92,16 @@ def test_changelog_has_an_entry_for_the_current_version() -> None:
     version = pyproject()["project"]["version"]
 
     assert f"## v{version}" in (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+
+
+def test_skill_zip_uses_lf_line_endings_even_from_crlf_sources(tmp_path: Path) -> None:
+    skill = tmp_path / "crlf-skill"
+    skill.mkdir()
+    (skill / "SKILL.md").write_bytes(b"---\r\nname: demo\r\ndescription: A demo skill.\r\n---\r\n\r\n# Demo\r\n")
+
+    with zipfile.ZipFile(build_skill_zip.build(skill, tmp_path / "out.zip")) as archive:
+        content = archive.read("crlf-skill/SKILL.md")
+        license_text = archive.read("crlf-skill/LICENSE")
+
+    assert b"\r\n" not in content and b"\r\n" not in license_text
+    assert content.startswith(b"---\nname: demo\n")
